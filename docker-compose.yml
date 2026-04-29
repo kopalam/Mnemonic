@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: mnemonic-postgres
+    environment:
+      POSTGRES_DB: mnemonic
+      POSTGRES_USER: mnemonic
+      POSTGRES_PASSWORD: mnemonic_dev_password
+    ports:
+      - "5434:5432"
+    volumes:
+      - mnemonic_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mnemonic"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  mnemonic_data:

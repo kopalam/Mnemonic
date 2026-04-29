@@ -1,0 +1,60 @@
+# Mnemonic 配置文件
+# Phase 1 MVP 配置
+
+# 存储层
+database:
+  host: "localhost"
+  port: 5434
+  name: "mnemonic"
+  user: "mnemonic"
+  password: "${MNEMONIC_DB_PASSWORD}"
+
+  # 连接池
+  pool_size: 10
+  max_overflow: 20
+
+# 向量引擎
+vector:
+  provider: "pgvector"  # Phase 1: pgvector only
+  embedding_model: "text-embedding-3-small"
+  embedding_dim: 1536
+  index_type: "ivfflat"
+  index_lists: 100
+
+# LLM 提取器
+llm:
+  provider: "openai"  # MVP: GPT-4o-mini
+  model: "gpt-4o-mini"
+  api_key: "${OPENAI_API_KEY}"
+  temperature: 0.1
+  max_tokens: 1000
+
+# 记忆提取
+extraction:
+  # 规则预过滤关键词
+  filter_keywords:
+    - "remember"
+    - "记住"
+    - "important"
+    - "偏好"
+    - "习惯"
+  
+  # 向量预检阈值
+  conflict_threshold: 0.7
+  
+  # 智能跳过
+  skip_next_turns: 3
+
+# API 服务
+api:
+  host: "0.0.0.0"
+  port: 8000
+  debug: false
+  
+  # 命名空间隔离
+  require_namespace: true
+
+# 日志
+logging:
+  level: "INFO"
+  format: "json"
