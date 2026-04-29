@@ -15,7 +15,7 @@ database:
 
 # 向量引擎
 vector:
-  provider: "pgvector"  # Phase 1: pgvector only
+  provider: "pgvector"
   embedding_model: "text-embedding-3-small"
   embedding_dim: 1536
   index_type: "ivfflat"
@@ -23,9 +23,10 @@ vector:
 
 # LLM 提取器
 llm:
-  provider: "openai"  # MVP: GPT-4o-mini
-  model: "gpt-4o-mini"
-  api_key: "${OPENAI_API_KEY}"
+  provider: "openai-compatible"
+  model: "gemma-4"
+  base_url: "http://120.25.63.187:9119/v1"
+  api_key: "${MNEMONIC_LLM_API_KEY}"
   temperature: 0.1
   max_tokens: 1000
 
@@ -48,7 +49,7 @@ extraction:
 # API 服务
 api:
   host: "0.0.0.0"
-  port: 8000
+  port: 8010
   debug: false
   
   # 命名空间隔离

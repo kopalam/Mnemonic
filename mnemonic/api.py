@@ -9,6 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from mnemonic.config import config
 from mnemonic.database import close_db, init_db
 from mnemonic.schemas import (
+    ExtractRequest,
     HealthResponse,
     MemoryCreate,
     MemoryListResponse,
@@ -206,13 +207,13 @@ async def search_memories(
 
 @app.post("/memories/extract", response_model=list[MemoryResponse], status_code=201)
 async def extract_and_store(
-    conversation: str,
+    request: ExtractRequest,
     namespace: Namespace = Depends(parse_namespace),
     store: MemoryStore = Depends(get_store),
 ):
     """Extract memories from conversation and store them."""
     # Extract facts using LLM
-    extracted = await extraction_service.extract(conversation)
+    extracted = await extraction_service.extract(request.conversation)
     
     if not extracted:
         return []

@@ -114,6 +114,13 @@ class MemoryListResponse(BaseModel):
     offset: int
 
 
+class ExtractRequest(BaseModel):
+    """Request body for memory extraction."""
+    
+    conversation: str = Field(..., min_length=1, description="Conversation text to extract memories from")
+    auto_store: bool = Field(default=True, description="Automatically store extracted memories")
+
+
 class HealthResponse(BaseModel):
     """Health check response."""
     
