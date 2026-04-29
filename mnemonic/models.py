@@ -44,8 +44,8 @@ class Memory(Base):
     memory_type: Mapped[str] = mapped_column(String(50), default="fact")
     importance: Mapped[float] = mapped_column(Float, default=0.5)
     
-    # 向量嵌入 (1536 for text-embedding-3-small)
-    embedding: Mapped[Optional[list[float]]] = mapped_column(Vector(1536))
+    # 向量嵌入 (4096 for Qwen3-Embedding-8B)
+    embedding: Mapped[Optional[list[float]]] = mapped_column(Vector(4096))
     
     # 时间戳
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

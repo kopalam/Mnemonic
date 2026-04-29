@@ -16,8 +16,14 @@ database:
 # 向量引擎
 vector:
   provider: "pgvector"
-  embedding_model: "text-embedding-3-small"
-  embedding_dim: 1536
+
+  # Embedding (SiliconFlow + Qwen3-Embedding-8B)
+  embedding:
+    base_url: "https://api.siliconflow.cn/v1"
+    api_key: "${MNEMONIC_EMBEDDING_API_KEY}"
+    model: "Qwen/Qwen3-Embedding-8B"
+    dim: 4096
+
   index_type: "ivfflat"
   index_lists: 100
 

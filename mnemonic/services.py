@@ -24,100 +24,79 @@ def _build_openai_client() -> AsyncOpenAI:
 
 
 class EmbeddingService:
-    """Vector embedding service.
+    """Vector embedding service via SiliconFlow API.
     
-    For self-hosted LLM endpoints that may not serve /v1/embeddings,
-    falls back to using the chat model to generate a text representation
-    which is then hashed into a pseudo-embedding vector.
+    Uses Qwen3-Embedding-8B (4096-dim) for semantic vectorization.
+    Falls back to pseudo-embedding only on API failure.
     """
     
     def __init__(self):
-        self.client = _build_openai_client()
-        self.model = config["vector"]["embedding_model"]
-        self.dim = config["vector"]["embedding_dim"]
-        self._use_native_embedding = True  # will auto-detect on first call
+        emb_cfg = config["vector"]["embedding"]
+        self.client = AsyncOpenAI(
+            api_key=emb_cfg["api_key"],
+            base_url=emb_cfg["base_url"],
+        )
+        self.model = emb_cfg["model"]
+        self.dim = emb_cfg["dim"]
+        self._fallback = False  # set True if API permanently fails
     
     async def embed(self, text: str) -> list[float]:
-        """Generate embedding for a single text.
-        
-        Tries native /v1/embeddings first. If the endpoint doesn't support
-        it (common for self-hosted models), falls back to chat-based
-        pseudo-embedding using the LLM.
-        """
-        if self._use_native_embedding:
-            try:
-                response = await self.client.embeddings.create(
-                    model=self.model,
-                    input=text,
+        """Generate embedding for a single text."""
+        if self._fallback:
+            return await self._pseudo_embed(text)
+        try:
+            response = await self.client.embeddings.create(
+                model=self.model,
+                input=text,
+            )
+            vec = response.data[0].embedding
+            if len(vec) != self.dim:
+                import logging
+                logging.getLogger("mnemonic").warning(
+                    f"Embedding dim mismatch: got {len(vec)}, expected {self.dim}"
                 )
-                return response.data[0].embedding
-            except Exception:
-                self._use_native_embedding = False
-        
-        # Fallback: use LLM to generate a deterministic pseudo-embedding
-        return await self._pseudo_embed(text)
+            return vec
+        except Exception as e:
+            import logging
+            logging.getLogger("mnemonic").error(f"Embedding API failed: {e}")
+            self._fallback = True
+            return await self._pseudo_embed(text)
     
     async def embed_batch(self, texts: list[str]) -> list[list[float]]:
         """Generate embeddings for multiple texts."""
-        if self._use_native_embedding:
-            try:
-                response = await self.client.embeddings.create(
-                    model=self.model,
-                    input=texts,
-                )
-                return [item.embedding for item in response.data]
-            except Exception:
-                self._use_native_embedding = False
-        
-        return [await self._pseudo_embed(t) for t in texts]
+        if self._fallback:
+            return [await self._pseudo_embed(t) for t in texts]
+        try:
+            response = await self.client.embeddings.create(
+                model=self.model,
+                input=texts,
+            )
+            return [item.embedding for item in response.data]
+        except Exception as e:
+            import logging
+            logging.getLogger("mnemonic").error(f"Batch embedding failed: {e}")
+            self._fallback = True
+            return [await self._pseudo_embed(t) for t in texts]
     
     async def _pseudo_embed(self, text: str) -> list[float]:
-        """Generate pseudo-embedding via LLM + SimHash.
-        
-        Uses the chat model to produce a semantic summary,
-        then maps it to a fixed-dim vector via deterministic hashing.
-        This is a stopgap until a proper embedding model is deployed.
-        
-        Guaranteed: no NaN, no Inf, unit-normalized, deterministic.
-        """
+        """Fallback: deterministic hash-based pseudo-embedding."""
         import hashlib
         import math
         
-        # Use LLM to get a semantic summary (short, deterministic)
-        try:
-            response = await self.client.chat.completions.create(
-                model=config["llm"]["model"],
-                messages=[
-                    {"role": "system", "content": "Summarize in exactly 10 keywords, comma-separated. No other text."},
-                    {"role": "user", "content": text},
-                ],
-                temperature=0.0,
-                max_tokens=50,
-            )
-            summary = response.choices[0].message.content or text
-        except Exception:
-            summary = text
-        
-        # Deterministic vector from hash: use integer chunks → map to [-1, 1]
-        # This avoids struct.unpack float NaN/Inf issues entirely
         vec = []
         seed = 0
         while len(vec) < self.dim:
-            h = hashlib.sha256(f"{summary}:{seed}".encode()).digest()
-            # Each byte → float in [-1, 1] via (byte - 128) / 128
+            h = hashlib.sha256(f"{text}:{seed}".encode()).digest()
             for byte in h:
-                val = (byte - 128) / 128.0
-                vec.append(val)
+                vec.append((byte - 128) / 128.0)
                 if len(vec) >= self.dim:
                     break
             seed += 1
         
-        # Normalize to unit vector (guaranteed no zero-norm since dim=1536)
         norm = math.sqrt(sum(v * v for v in vec[:self.dim]))
         if norm > 1e-10:
             vec = [v / norm for v in vec[:self.dim]]
         else:
-            # Fallback: first element = 1, rest = 0
             vec = [1.0] + [0.0] * (self.dim - 1)
         
         return vec[:self.dim]

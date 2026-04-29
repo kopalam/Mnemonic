@@ -24,8 +24,8 @@ CREATE TABLE memories (
     memory_type VARCHAR(50) DEFAULT 'fact',  -- fact/preference/rule/context
     importance FLOAT DEFAULT 0.5,
     
-    -- 向量嵌入 (1536 for text-embedding-3-small)
-    embedding vector(1536),
+    -- 向量嵌入 (4096 for Qwen3-Embedding-8B)
+    embedding vector(4096),
     
     -- 时间戳
     created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -48,10 +48,10 @@ CREATE INDEX idx_memories_created ON memories(created_at DESC)
 CREATE INDEX idx_memories_type ON memories(memory_type) 
     WHERE deleted_at IS NULL;
 
--- 向量索引 (IVFFlat)
-CREATE INDEX idx_memories_embedding ON memories 
-    USING ivfflat (embedding vector_cosine_ops) 
-    WITH (lists = 100);
+-- 向量索引 (exact search for dim>2000, add HNSW after partial embedding projection in Phase 2)
+-- CREATE INDEX idx_memories_embedding ON memories 
+--     USING hnsw (embedding vector_cosine_ops)
+--     WITH (m = 16, ef_construction = 64);
 
 -- 记忆访问日志 (Phase 2: WRRF权重计算)
 CREATE TABLE memory_access_logs (
