@@ -1,21 +1,54 @@
+version: "3.8"
+
 services:
-  postgres:
+  # PostgreSQL + pgvector
+  mnemonic-postgres:
     image: pgvector/pgvector:pg16
     container_name: mnemonic-postgres
+    restart: always
+    ports:
+      - "5434:5432"
     environment:
       POSTGRES_DB: mnemonic
       POSTGRES_USER: mnemonic
-      POSTGRES_PASSWORD: mnemonic_dev_password
-    ports:
-      - "5434:5432"
+      POSTGRES_PASSWORD: ${MNEMONIC_DB_PASSWORD:-mnemonic_dev}
     volumes:
-      - mnemonic_data:/var/lib/postgresql/data
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - mnemonic-pgdata:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U mnemonic"]
-      interval: 5s
+      interval: 10s
       timeout: 5s
       retries: 5
 
+  # FastAPI API Server
+  mnemonic-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: mnemonic-api
+    restart: always
+    ports:
+      - "8010:8010"
+    environment:
+      MNEMONIC_DB_HOST: mnemonic-postgres
+      MNEMONIC_DB_PORT: 5432
+      MNEMONIC_DB_PASSWORD: ${MNEMONIC_DB_PASSWORD:-mnemonic_dev}
+      MNEMONIC_LLM_API_KEY: ${MNEMONIC_LLM_API_KEY}
+      MNEMONIC_LLM_FALLBACK_API_KEY: ${MNEMONIC_LLM_FALLBACK_API_KEY}
+      MNEMONIC_EMBEDDING_API_KEY: ${MNEMONIC_EMBEDDING_API_KEY}
+    volumes:
+      # 代码热挂载 - 改代码不用rebuild
+      - ./mnemonic:/app/mnemonic:ro
+      - ./config.yaml:/app/config.yaml:ro
+    depends_on:
+      mnemonic-postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import httpx; httpx.get('http://localhost:8010/health').raise_for_status()"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
 volumes:
-  mnemonic_data:
+  mnemonic-pgdata:

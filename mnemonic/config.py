@@ -22,14 +22,18 @@ class Config:
             return yaml.safe_load(f)
     
     def _substitute_env(self, obj: Any) -> Any:
-        """Recursively substitute ${VAR} with environment variables."""
+        """Recursively substitute ${VAR} and ${VAR:-default} with environment variables."""
         if isinstance(obj, dict):
             return {k: self._substitute_env(v) for k, v in obj.items()}
         elif isinstance(obj, list):
             return [self._substitute_env(item) for item in obj]
         elif isinstance(obj, str) and obj.startswith("${") and obj.endswith("}"):
-            var_name = obj[2:-1]
-            return os.getenv(var_name, obj)
+            inner = obj[2:-1]
+            # Support ${VAR:-default} syntax
+            if ":-" in inner:
+                var_name, default = inner.split(":-", 1)
+                return os.getenv(var_name, default)
+            return os.getenv(inner, obj)
         return obj
     
     def __getitem__(self, key: str) -> Any:

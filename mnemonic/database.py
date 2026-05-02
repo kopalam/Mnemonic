@@ -47,6 +47,11 @@ async def init_db() -> None:
     from mnemonic.models import Base
     
     async with engine.begin() as conn:
+        # 先创建pgvector扩展
+        await conn.execute(__import__('sqlalchemy').text('CREATE EXTENSION IF NOT EXISTS vector'))
+        await conn.commit()
+    
+    async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
 

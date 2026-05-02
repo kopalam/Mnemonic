@@ -1,0 +1,326 @@
+{
+  "meta": {
+    "title": "Mnemonic AI Agent 持久化记忆系统 — 四维评估测试报告",
+    "version": "v2.0",
+    "date": "2026-04-30 15:00",
+    "environment": {
+      "llm": "gemma-4 (via LiteLLM @ 120.25.63.187:9119)",
+      "embedding": "Qwen/Qwen3-Embedding-8B (via SiliconFlow)",
+      "database": "PostgreSQL 16 + pgvector (Docker, port 5434)",
+      "search_modes": [
+        "vector",
+        "keyword (jieba+tsvector)",
+        "hybrid (RRF)"
+      ],
+      "memory_count": 236,
+      "framework": "FastAPI 0.1.0"
+    },
+    "thresholds": {
+      "d1_extraction_f1": "≥0.75",
+      "d2_conflict_resolution": "≥0.90",
+      "d3_robustness_noise_rate": "≤10%",
+      "d4_l1_hit_rate": "≥75%",
+      "d4_mrr": "≥0.85"
+    }
+  },
+  "d1_extraction": {
+    "name": "提取精度 (Extraction F1)",
+    "description": "测试extract端点从对话文本中提取结构化记忆的能力，对比LLM提取结果与人工标注的expected_facts",
+    "threshold": "F1 ≥ 0.75",
+    "result": "FAIL",
+    "avg_f1": 0.374,
+    "cases": [
+      {
+        "id": "ext-01",
+        "scenario": "Solana DEX swap交易记录",
+        "input": "我今天用Solana的Raydium做了一个SOL-USDC的swap，滑点设的1%，gas费大概0.00025 SOL。顺手又扫了一眼Jupiter的限价单，深度还行。",
+        "expected_facts": [
+          "SOL-USDC swap on Raydium",
+          "滑点1%",
+          "gas费0.00025 SOL",
+          "Jupiter限价单深度"
+        ],
+        "extracted": [
+          "The user performed a SOL-USDC swap using Raydium on the Solana network.",
+          "The user set a slippage tolerance of 1% for their Solana swap."
+        ],
+        "hits": 2,
+        "expected_count": 4,
+        "precision": 1.0,
+        "recall": 0.5,
+        "f1": 0.67,
+        "analysis": "Gemma-4提取了2条有效记忆（swap行为+滑点设置），但遗漏了gas费和Jupiter深度信息。提取粒度偏粗。"
+      },
+      {
+        "id": "ext-02",
+        "scenario": "TG Bot故障记录",
+        "input": "那个TG bot昨天崩了一次，大概是晚上11点，用户群里有人说frozen了。我重启了服务就好了，可能是内存泄漏。",
+        "expected_facts": [
+          "TG bot昨晚11点崩溃",
+          "用户报告frozen",
+          "重启服务修复",
+          "疑似内存泄漏"
+        ],
+        "extracted": [
+          "The TG bot experienced a crash/freeze around 11 PM yesterday.",
+          "The TG bot issue was resolved by restarting the service.",
+          "The TG bot crash might be caused by a memory leak."
+        ],
+        "hits": 1,
+        "expected_count": 4,
+        "precision": 0.33,
+        "recall": 0.25,
+        "f1": 0.29,
+        "analysis": "提取了3条，内容基本对应但分词匹配算法未完全命中。'用户报告frozen'未独立提取。"
+      },
+      {
+        "id": "ext-03",
+        "scenario": "Boss偏好设置",
+        "input": "Boss说以后汇报用简短bullet points就行，不要长篇大论。还有，数字精确到小数点后两位。",
+        "expected_facts": [
+          "汇报用bullet points",
+          "不要长篇大论",
+          "数字精确到两位小数"
+        ],
+        "extracted": [
+          "Prefers reports to be concise and in bullet point format rather than long-form.",
+          "Requires numbers to be precise to two decimal places."
+        ],
+        "hits": 0,
+        "expected_count": 2,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "analysis": "提取内容语义正确，但全英文输出导致中文expected_facts关键词匹配失败。匹配算法需要改进或提取prompt应强制中文输出。"
+      },
+      {
+        "id": "ext-04",
+        "scenario": "zSunKoin技术架构",
+        "input": "zSunKoin的Data Agent用CCXT拿K线数据，15分钟周期，存到TimescaleDB。BTC价格用WebSocket订阅Binance实时流。情绪分析用自部署Gemma-4。",
+        "expected_facts": [
+          "CCXT获取K线",
+          "15分钟周期",
+          "TimescaleDB存储",
+          "Binance WebSocket BTC价格",
+          "Gemma-4情绪分析"
+        ],
+        "extracted": [
+          "zSunKoin's Data Agent uses CCXT to fetch K-line data.",
+          "K-line data is fetched at a 15-minute interval.",
+          "K-line data is stored in TimescaleDB.",
+          "BTC price is obtained via WebSocket subscription to Binance's real-time stream."
+        ],
+        "hits": 1,
+        "expected_count": 4,
+        "precision": 0.25,
+        "recall": 0.25,
+        "f1": 0.25,
+        "analysis": "实际提取了4/5条关键信息（仅遗漏Gemma-4情绪分析），但中文匹配算法未能识别英文翻译后的内容。"
+      },
+      {
+        "id": "ext-05",
+        "scenario": "飞书文档权限配置",
+        "input": "飞书文档API需要wiki:wiki:readonly和wiki:node:read两个权限，目前应用cli_a9607dd1d23a5cb5还没授权。",
+        "expected_facts": [
+          "需要wiki:wiki:readonly权限",
+          "需要wiki:node:read权限",
+          "应用cli_a9607dd1d23a5cb5未授权"
+        ],
+        "extracted": [
+          "To use Feishu (Lark) Document API, both 'wiki:wiki:readonly' and 'wiki:node:read' scopes must be enabled."
+        ],
+        "hits": 1,
+        "expected_count": 2,
+        "precision": 1.0,
+        "recall": 0.5,
+        "f1": 0.67,
+        "analysis": "合并提取了两个权限为一条记忆，遗漏了具体应用ID信息。"
+      }
+    ],
+    "root_causes": [
+      "Gemma-4倾向于英文输出，中文输入→英文提取，导致关键词匹配失败",
+      "提取粒度不稳定：有时拆分细致（ext-04），有时合并（ext-05）",
+      "匹配算法依赖中文关键词，无法跨语言匹配"
+    ]
+  },
+  "d2_recency": {
+    "name": "时效性/冲突解决 (Conflict Resolution)",
+    "description": "测试记忆的时效性：当同一信息的旧版本已存储时，新版本写入应触发冲突检测并覆盖旧记忆",
+    "threshold": "冲突解决率 ≥ 90%",
+    "result": "FAIL",
+    "resolution_rate": 0.8,
+    "cases": [
+      {
+        "id": "rec-01",
+        "topic": "API端口变更",
+        "old": "Mnemonic系统的API端口是8000",
+        "new": "Mnemonic系统的API端口已改为8010",
+        "query": "Mnemonic的API端口",
+        "expected_answer": "8010",
+        "expected_not": "8000",
+        "correct": true,
+        "analysis": "冲突检测触发，旧端口记忆被覆盖 ✅"
+      },
+      {
+        "id": "rec-02",
+        "topic": "TG用户名变更",
+        "old": "Boss的TG用户名是@old_boss_name",
+        "new": "Boss的TG用户名已改为@web3_boss_sol",
+        "query": "Boss的TG用户名",
+        "expected_answer": "@web3_boss_sol",
+        "expected_not": "@old_boss_name",
+        "correct": true,
+        "analysis": "冲突检测触发 ✅"
+      },
+      {
+        "id": "rec-03",
+        "topic": "LLM模型切换",
+        "old": "项目使用GPT-4作为默认LLM模型",
+        "new": "项目已切换到自部署的Gemma-4作为LLM模型",
+        "query": "项目用的什么LLM",
+        "expected_answer": "Gemma-4",
+        "expected_not": "GPT-4",
+        "correct": true,
+        "analysis": "冲突检测触发 ✅"
+      },
+      {
+        "id": "rec-04",
+        "topic": "RPC节点迁移",
+        "old": "Solana的RPC节点使用公共endpoint",
+        "new": "Solana RPC已迁移到Helius付费节点",
+        "query": "Solana的RPC节点",
+        "expected_answer": "Helius付费节点",
+        "expected_not": "公共endpoint",
+        "correct": true,
+        "analysis": "冲突检测触发 ✅"
+      },
+      {
+        "id": "rec-05",
+        "topic": "数据库密码更新",
+        "old": "数据库密码是old_password_123",
+        "new": "数据库密码已更新为new_secure_pass_456",
+        "query": "数据库密码",
+        "expected_answer": "new_secure_pass_456",
+        "expected_not": "old_password_123",
+        "correct": false,
+        "analysis": "旧密码'old_password_123'仍残留在TOP5中（rank=2），冲突检测未完全覆盖。原因：vector相似度阈值0.7，新旧密码文本语义差异较大（'是old_password_123' vs '已更新为new_secure_pass_456'），embedding距离超过阈值，未被判定为冲突。"
+      }
+    ],
+    "root_causes": [
+      "冲突检测阈值threshold=0.7过高，语义差异较大的更新无法触发",
+      "LLM冲突判断（check_conflict）仅在vector相似度超阈值后才调用，遗漏了文本差异大但语义相同的更新",
+      "需要补充keyword级别的冲突预检"
+    ]
+  },
+  "d3_robustness": {
+    "name": "抗干扰性 (Noise Robustness)",
+    "description": "测试extract端点在面对无关信息、闲聊、噪音时的过滤能力",
+    "threshold": "噪声率 ≤ 10%",
+    "result": "PASS",
+    "pass_rate": 1.0,
+    "cases": [
+      {
+        "id": "rob-01",
+        "scenario": "闲聊混合技术信息",
+        "noise_count": 0,
+        "noise_rate": 0.0,
+        "extracted_count": 2,
+        "pass": true,
+        "analysis": "成功过滤闲聊噪音，仅提取了code line count和Data Agent技术细节"
+      },
+      {
+        "id": "rob-02",
+        "scenario": "不完整需求+未确认计划",
+        "noise_count": 0,
+        "noise_rate": 0.0,
+        "extracted_count": 3,
+        "pass": true,
+        "analysis": "提取了TG Bot格式要求和FastAPI技术栈，过滤了未确认的会议安排"
+      },
+      {
+        "id": "rob-03",
+        "scenario": "多主题技术对话",
+        "noise_count": 0,
+        "noise_rate": 0.0,
+        "extracted_count": 3,
+        "pass": true,
+        "analysis": "提取了命名空间设计、飞书权限、pgvector限制三条技术事实"
+      }
+    ]
+  },
+  "d4_relevance": {
+    "name": "检索相关性 (Search Relevance)",
+    "description": "测试搜索端点在236条真实记忆上的检索精度，40个查询覆盖人名/项目/技术/偏好/工具等维度",
+    "threshold": "L1≥75%, MRR≥0.85",
+    "modes": {
+      "vector": {
+        "engine": "pgvector cosine similarity (IVFFlat, dim=4096)",
+        "L1": 0.475,
+        "L3": 0.65,
+        "MRR": 0.557,
+        "miss_count": 12,
+        "result": "FAIL",
+        "miss_samples": [
+          "Boss的运营重点→用户增长",
+          "Boss沟通语言→中文",
+          "coinAnalysis是什么→Telegram Bot"
+        ]
+      },
+      "keyword": {
+        "engine": "jieba分词 + PostgreSQL tsvector/tsquery (BM25-style)",
+        "L1": 0.5,
+        "L3": 0.8,
+        "MRR": 0.645,
+        "miss_count": 5,
+        "result": "FAIL",
+        "miss_samples": [
+          "coinAnalysis技术栈→Python+Redis",
+          "Boss对Emoji态度→限制使用",
+          "Mnemonic项目状态→Phase1"
+        ]
+      },
+      "hybrid": {
+        "engine": "RRF fusion (vector_weight=2.0, rrf_k=60)",
+        "L1": 0.525,
+        "L3": 0.65,
+        "MRR": 0.597,
+        "miss_count": 10,
+        "result": "FAIL",
+        "miss_samples": [
+          "Boss的运营重点→用户增长",
+          "Boss沟通语言→中文",
+          "coinAnalysis技术栈→Python+Redis"
+        ]
+      }
+    },
+    "best_mode": "keyword (L3=80%, MRR=0.645)",
+    "root_causes": [
+      "keyword最强(L3=80%)说明中文场景下jieba分词+tsvector效果优于纯向量检索",
+      "hybrid未超过keyword：vector_weight=2.0过大，低质量向量结果拉低了RRF排序",
+      "vector的12个miss主要是短查询(Boss沟通语言→中文)语义泛化不足",
+      "记忆碎片化：同一主题信息分散在多条记忆中，精确答案可能不在TOP1"
+    ]
+  },
+  "summary": {
+    "total_score": "2/4 PASS",
+    "pass_dimensions": [
+      "D3 抗干扰性"
+    ],
+    "fail_dimensions": [
+      "D1 提取精度",
+      "D2 时效性",
+      "D4 检索相关性"
+    ],
+    "critical_issues": [
+      "D1: Gemma-4英文输出+中文匹配算法不兼容 → 需改prompt或匹配策略",
+      "D2: 冲突检测阈值过高 → 需降阈值+补充keyword预检",
+      "D4: hybrid权重失衡 → 需调参vector_weight和rrf_k"
+    ],
+    "recommendations": [
+      "D1修复: extraction prompt添加'用中文输出'指令；匹配算法增加中英互译映射",
+      "D2修复: conflict_threshold从0.7降到0.55；增加keyword重叠度预检",
+      "D4修复: hybrid的vector_weight从2.0降到1.2；keyword权重提升；考虑学习排序",
+      "通用: 记忆合并/去重机制需加强，减少碎片化"
+    ]
+  }
+}

@@ -3,8 +3,8 @@
 
 # 存储层
 database:
-  host: "localhost"
-  port: 5434
+  host: "${MNEMONIC_DB_HOST:-localhost}"
+  port: "${MNEMONIC_DB_PORT:-5434}"
   name: "mnemonic"
   user: "mnemonic"
   password: "${MNEMONIC_DB_PASSWORD}"
@@ -17,22 +17,41 @@ database:
 vector:
   provider: "pgvector"
 
-  # Embedding (SiliconFlow + Qwen3-Embedding-8B)
+  # Embedding (SiliconFlow + Qwen3-Embedding-0.6B)
   embedding:
     base_url: "https://api.siliconflow.cn/v1"
     api_key: "${MNEMONIC_EMBEDDING_API_KEY}"
-    model: "Qwen/Qwen3-Embedding-8B"
-    dim: 4096
+    model: "Qwen/Qwen3-Embedding-0.6B"
+    dim: 1024
 
   index_type: "ivfflat"
   index_lists: 100
 
-# LLM 提取器
+# LLM 提取器（支持降级）
 llm:
   provider: "openai-compatible"
-  model: "gemma-4"
-  base_url: "http://120.25.63.187:9119/v1"
-  api_key: "${MNEMONIC_LLM_API_KEY}"
+  
+  # 主LLM: 自部署Gemma-4
+  primary:
+    model: "gemma-4"
+    base_url: "http://120.25.63.187:9119/v1"
+    api_key: "${MNEMONIC_LLM_API_KEY}"
+    timeout: 120  # 秒，Gemma-4提取较慢
+  
+  # 降级LLM: SiliconFlow Qwen3-8B
+  fallback:
+    model: "Qwen/Qwen3-8B"
+    base_url: "https://api.siliconflow.cn/v1"
+    api_key: "${MNEMONIC_LLM_FALLBACK_API_KEY}"
+    timeout: 60
+  
+  # 降级触发条件（禁用降级，只用 Gemma-4）
+  failover:
+    max_retries: 0           # 禁用降级
+    retry_delay: 2
+    error_codes: []
+    timeout_trigger: false   # 禁用超时降级
+  
   temperature: 0.1
   max_tokens: 1000
 

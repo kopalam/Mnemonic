@@ -1,0 +1,1020 @@
+{
+  "d1": {
+    "cases": [
+      {
+        "id": "ext-01",
+        "extracted_count": 0,
+        "correct": 0,
+        "total_expected": 4,
+        "anti_extracted": 0,
+        "precision": 0,
+        "recall": 0.0,
+        "f1": 0,
+        "extracted": []
+      },
+      {
+        "id": "ext-02",
+        "extracted_count": 0,
+        "correct": 0,
+        "total_expected": 4,
+        "anti_extracted": 0,
+        "precision": 0,
+        "recall": 0.0,
+        "f1": 0,
+        "extracted": []
+      },
+      {
+        "id": "ext-03",
+        "extracted_count": 0,
+        "correct": 0,
+        "total_expected": 2,
+        "anti_extracted": 0,
+        "precision": 0,
+        "recall": 0.0,
+        "f1": 0,
+        "extracted": []
+      },
+      {
+        "id": "ext-04",
+        "extracted_count": 0,
+        "correct": 0,
+        "total_expected": 4,
+        "anti_extracted": 0,
+        "precision": 0,
+        "recall": 0.0,
+        "f1": 0,
+        "extracted": []
+      },
+      {
+        "id": "ext-05",
+        "extracted_count": 0,
+        "correct": 0,
+        "total_expected": 2,
+        "anti_extracted": 0,
+        "precision": 0,
+        "recall": 0.0,
+        "f1": 0,
+        "extracted": []
+      }
+    ],
+    "avg_f1": 0.0
+  },
+  "d2": {
+    "cases": [
+      {
+        "id": "rec-01",
+        "passed": false,
+        "top1": "",
+        "has_new": false,
+        "has_old": false,
+        "old_in_any": false,
+        "all_results": []
+      },
+      {
+        "id": "rec-02",
+        "passed": false,
+        "top1": "",
+        "has_new": false,
+        "has_old": false,
+        "old_in_any": false,
+        "all_results": []
+      },
+      {
+        "id": "rec-03",
+        "passed": false,
+        "top1": "",
+        "has_new": false,
+        "has_old": false,
+        "old_in_any": false,
+        "all_results": []
+      },
+      {
+        "id": "rec-04",
+        "passed": false,
+        "top1": "",
+        "has_new": false,
+        "has_old": false,
+        "old_in_any": false,
+        "all_results": []
+      },
+      {
+        "id": "rec-05",
+        "passed": false,
+        "top1": "",
+        "has_new": false,
+        "has_old": false,
+        "old_in_any": false,
+        "all_results": []
+      }
+    ],
+    "resolution_rate": 0.0
+  },
+  "d3": {
+    "cases": [
+      {
+        "id": "rob-01",
+        "extracted_count": 0,
+        "correct_signals": 0,
+        "total_expected": 3,
+        "signal_recall": 0.0,
+        "noise_extracted": 0,
+        "noise_rate": 0,
+        "extracted": []
+      },
+      {
+        "id": "rob-02",
+        "extracted_count": 0,
+        "correct_signals": 0,
+        "total_expected": 2,
+        "signal_recall": 0.0,
+        "noise_extracted": 0,
+        "noise_rate": 0,
+        "extracted": []
+      },
+      {
+        "id": "rob-03",
+        "extracted_count": 0,
+        "correct_signals": 0,
+        "total_expected": 3,
+        "signal_recall": 0.0,
+        "noise_extracted": 0,
+        "noise_rate": 0,
+        "extracted": []
+      }
+    ],
+    "avg_signal_recall": 0.0,
+    "avg_noise_rate": 0.0
+  },
+  "d4": {
+    "vector": {
+      "total": 40,
+      "l1_hits": 14,
+      "l3_hits": 23,
+      "l1_rate": 0.35,
+      "l3_rate": 0.575,
+      "mrr": 0.438,
+      "details": [
+        {
+          "q": "Boss是做什么的",
+          "expected": "Boss是Web3资深运营专家",
+          "found_rank": null,
+          "top1": "Boss明确说: 你是运营，不是开发",
+          "l1": false
+        },
+        {
+          "q": "Boss的运营重点",
+          "expected": "用户增长",
+          "found_rank": null,
+          "top1": "Boss明确说: 你是运营，不是开发",
+          "l1": false
+        },
+        {
+          "q": "HNOE角色定位",
+          "expected": "运营，不是开发",
+          "found_rank": 0,
+          "top1": "Boss要求HNOE角色定位严格在运营范畴，不越界做开发",
+          "l1": true
+        },
+        {
+          "q": "Boss对文案的要求",
+          "expected": "去AI味",
+          "found_rank": 1,
+          "top1": "Boss要求运营文案用Degen视角或量化分析师口吻撰写",
+          "l1": false
+        },
+        {
+          "q": "Boss沟通语言",
+          "expected": "中文",
+          "found_rank": null,
+          "top1": "Boss严禁使用废话开场白",
+          "l1": false
+        },
+        {
+          "q": "coinAnalysis是什么",
+          "expected": "Solana Token分析Telegram Bot",
+          "found_rank": null,
+          "top1": "coinAnalysis功能包含Rug Pull检测",
+          "l1": false
+        },
+        {
+          "q": "coinAnalysis技术栈",
+          "expected": "Python+Redis",
+          "found_rank": null,
+          "top1": "coinAnalysis针对Meme币有专门的分析能力",
+          "l1": false
+        },
+        {
+          "q": "zSunKoin的交易周期",
+          "expected": "15分钟",
+          "found_rank": null,
+          "top1": "zSunKoin核心策略是趋势跟随，不预测只跟随",
+          "l1": false
+        },
+        {
+          "q": "zSunKoin杠杆设置",
+          "expected": "3-10x自适应",
+          "found_rank": 0,
+          "top1": "zSunKoin杠杆范围为3-10x自适应",
+          "l1": true
+        },
+        {
+          "q": "zSunKoin核心策略",
+          "expected": "趋势跟随",
+          "found_rank": 0,
+          "top1": "zSunKoin核心策略是趋势跟随，不预测只跟随",
+          "l1": true
+        },
+        {
+          "q": "Mnemonic的API端口",
+          "expected": "8010",
+          "found_rank": 0,
+          "top1": "Mnemonic API服务端口是8010",
+          "l1": true
+        },
+        {
+          "q": "Mnemonic数据库端口",
+          "expected": "5434",
+          "found_rank": 1,
+          "top1": "Mnemonic API服务端口是8010",
+          "l1": false
+        },
+        {
+          "q": "Mnemonic用什么框架",
+          "expected": "FastAPI",
+          "found_rank": 0,
+          "top1": "Mnemonic是AI Agent持久化记忆中间件。技术栈: FastAPI + PostgreSQ",
+          "l1": true
+        },
+        {
+          "q": "Mnemonic搜索模式",
+          "expected": "三种",
+          "found_rank": 0,
+          "top1": "Mnemonic搜索: 三种模式vector/keyword/hybrid。Vector用Qwen3",
+          "l1": true
+        },
+        {
+          "q": "Mnemonic命名空间",
+          "expected": "4级",
+          "found_rank": 2,
+          "top1": "Mnemonic是AI Agent持久化记忆中间件。技术栈: FastAPI + PostgreSQ",
+          "l1": false
+        },
+        {
+          "q": "embedding模型",
+          "expected": "Qwen3-Embedding-8B",
+          "found_rank": 2,
+          "top1": "Mnemonic使用向量嵌入（Embedding）实现语义搜索",
+          "l1": false
+        },
+        {
+          "q": "embedding维度",
+          "expected": "4096",
+          "found_rank": 2,
+          "top1": "Mnemonic使用向量嵌入（Embedding）实现语义搜索",
+          "l1": false
+        },
+        {
+          "q": "Solana TPS正常值",
+          "expected": "1500",
+          "found_rank": 0,
+          "top1": "Solana TPS正常值约1500以上",
+          "l1": true
+        },
+        {
+          "q": "Boss对链上数据的态度",
+          "expected": "严禁捏造",
+          "found_rank": null,
+          "top1": "Boss要求社区沟通保持克制、精练、具备Crypto Native语感",
+          "l1": false
+        },
+        {
+          "q": "搜索用哪个API",
+          "expected": "Tavily",
+          "found_rank": 0,
+          "top1": "Boss要求所有搜索任务主动使用Tavily API，不要用浏览器搜索引擎",
+          "l1": true
+        },
+        {
+          "q": "Boss对搜索的要求",
+          "expected": "主动用Tavily",
+          "found_rank": null,
+          "top1": "Boss要求: 所有搜索任务主动使用Tavily API，不要用浏览器搜索引擎",
+          "l1": false
+        },
+        {
+          "q": "TG Bot是什么项目",
+          "expected": "coinAnalysis",
+          "found_rank": 2,
+          "top1": "Telegram Bot API是被动响应模式，无法主动发起操作",
+          "l1": false
+        },
+        {
+          "q": "zSunKoin数据源",
+          "expected": "CCXT和WebSocket",
+          "found_rank": null,
+          "top1": "zSunKoin使用BTC-USDT作为市场状态参考指标",
+          "l1": false
+        },
+        {
+          "q": "zSunKoin存储",
+          "expected": "TimescaleDB",
+          "found_rank": null,
+          "top1": "zSunKoin使用BTC-USDT作为市场状态参考指标",
+          "l1": false
+        },
+        {
+          "q": "Mnemonic用哪个向量库",
+          "expected": "pgvector",
+          "found_rank": 1,
+          "top1": "Mnemonic使用向量嵌入（Embedding）实现语义搜索",
+          "l1": false
+        },
+        {
+          "q": "Boss对Emoji的态度",
+          "expected": "限制使用",
+          "found_rank": null,
+          "top1": "Boss偏好用极简文字安抚或引导社区情绪",
+          "l1": false
+        },
+        {
+          "q": "Mnemonic项目状态",
+          "expected": "Phase1完成",
+          "found_rank": null,
+          "top1": "Mnemonic API服务端口是8010",
+          "l1": false
+        },
+        {
+          "q": "HNOE运行哲学",
+          "expected": "事实胜于营销",
+          "found_rank": 0,
+          "top1": "HNOE运行哲学: 事实胜于营销，数据高于情绪。严禁捏造链上数据，严禁对社区做无法兑现的承诺。处理F",
+          "l1": true
+        },
+        {
+          "q": "zSunKoin市场参考",
+          "expected": "BTC-USDT",
+          "found_rank": 0,
+          "top1": "zSunKoin使用BTC-USDT作为市场状态参考指标",
+          "l1": true
+        },
+        {
+          "q": "Mnemonic的embedding key更新",
+          "expected": "SiliconFlow",
+          "found_rank": null,
+          "top1": "Mnemonic API服务端口是8010",
+          "l1": false
+        },
+        {
+          "q": "zSunKoin止损策略",
+          "expected": "ATR动态止损",
+          "found_rank": 0,
+          "top1": "zSunKoin使用ATR动态止损",
+          "l1": true
+        },
+        {
+          "q": "Boss对社区FUD的态度",
+          "expected": "用简练文字安抚",
+          "found_rank": null,
+          "top1": "Boss偏好用极简文字安抚或引导社区情绪",
+          "l1": false
+        },
+        {
+          "q": "coinAnalysis代码行数",
+          "expected": "851行",
+          "found_rank": null,
+          "top1": "coinAnalysis有开发计划文档plan.md",
+          "l1": false
+        },
+        {
+          "q": "Mnemonic中文分词方案",
+          "expected": "jieba",
+          "found_rank": 0,
+          "top1": "Mnemonic是AI Agent持久化记忆中间件。技术栈: FastAPI + PostgreSQ",
+          "l1": true
+        },
+        {
+          "q": "hybrid搜索融合算法",
+          "expected": "RRF",
+          "found_rank": 2,
+          "top1": "Boss要求所有搜索任务主动使用Tavily API，不要用浏览器搜索引擎",
+          "l1": false
+        },
+        {
+          "q": "zSunKoin有多少个Agent",
+          "expected": "6个",
+          "found_rank": 2,
+          "top1": "zSunKoin杠杆范围为3-10x自适应",
+          "l1": false
+        },
+        {
+          "q": "Boss项目协作工具",
+          "expected": "飞书",
+          "found_rank": 0,
+          "top1": "Boss使用飞书群进行项目团队沟通",
+          "l1": true
+        },
+        {
+          "q": "zSunKoin LLM模型",
+          "expected": "Gemma-4",
+          "found_rank": 0,
+          "top1": "zSunKoin是加密货币量化交易系统。技术栈: Python + CCXT/WebSocket +",
+          "l1": true
+        },
+        {
+          "q": "Mnemonic PG用户名",
+          "expected": "mnemonic",
+          "found_rank": null,
+          "top1": "Mnemonic API服务端口是8010",
+          "l1": false
+        },
+        {
+          "q": "zSunKoin技术栈包含PyTorch吗",
+          "expected": "包含",
+          "found_rank": null,
+          "top1": "zSunKoin是加密货币量化交易系统。技术栈: Python + CCXT/WebSocket +",
+          "l1": false
+        }
+      ]
+    },
+    "keyword": {
+      "total": 40,
+      "l1_hits": 20,
+      "l3_hits": 30,
+      "l1_rate": 0.5,
+      "l3_rate": 0.75,
+      "mrr": 0.624,
+      "details": [
+        {
+          "q": "Boss是做什么的",
+          "expected": "Boss是Web3资深运营专家",
+          "found_rank": null,
+          "top1": "Boss对代码质量要求高，注重单元测试覆盖率",
+          "l1": false
+        },
+        {
+          "q": "Boss的运营重点",
+          "expected": "用户增长",
+          "found_rank": 0,
+          "top1": "Boss是Web3资深运营专家，主攻Solana生态数据与增长。使用中文沟通。偏好简洁回复，要求文案",
+          "l1": true
+        },
+        {
+          "q": "HNOE角色定位",
+          "expected": "运营，不是开发",
+          "found_rank": 0,
+          "top1": "Boss要求HNOE角色定位严格在运营范畴，不越界做开发",
+          "l1": true
+        },
+        {
+          "q": "Boss对文案的要求",
+          "expected": "去AI味",
+          "found_rank": 1,
+          "top1": "Boss要求文案戒除AI味，禁止使用陈词滥调和废话开场",
+          "l1": false
+        },
+        {
+          "q": "Boss沟通语言",
+          "expected": "中文",
+          "found_rank": 2,
+          "top1": "Boss要求社区沟通保持克制、精练、具备Crypto Native语感",
+          "l1": false
+        },
+        {
+          "q": "coinAnalysis是什么",
+          "expected": "Solana Token分析Telegram Bot",
+          "found_rank": 0,
+          "top1": "coinAnalysis是一个Solana Token分析Telegram Bot，代码约851行，",
+          "l1": true
+        },
+        {
+          "q": "coinAnalysis技术栈",
+          "expected": "Python+Redis",
+          "found_rank": null,
+          "top1": "coinAnalysis是一个Solana Token分析Telegram Bot，代码约851行，",
+          "l1": false
+        },
+        {
+          "q": "zSunKoin的交易周期",
+          "expected": "15分钟",
+          "found_rank": 0,
+          "top1": "zSunKoin是加密货币量化交易系统。技术栈: Python + CCXT/WebSocket +",
+          "l1": true
+        },
+        {
+          "q": "zSunKoin杠杆设置",
+          "expected": "3-10x自适应",
+          "found_rank": 0,
+          "top1": "zSunKoin杠杆范围为3-10x自适应",
+          "l1": true
+        },
+        {
+          "q": "zSunKoin核心策略",
+          "expected": "趋势跟随",
+          "found_rank": 0,
+          "top1": "zSunKoin核心策略是趋势跟随，不预测只跟随",
+          "l1": true
+        },
+        {
+          "q": "Mnemonic的API端口",
+          "expected": "8010",
+          "found_rank": 0,
+          "top1": "Mnemonic是AI Agent持久化记忆中间件。技术栈: FastAPI + PostgreSQ",
+          "l1": true
+        },
+        {
+          "q": "Mnemonic数据库端口",
+          "expected": "5434",
+          "found_rank": 0,
+          "top1": "Mnemonic是AI Agent持久化记忆中间件。技术栈: FastAPI + PostgreSQ",
+          "l1": true
+        },
+        {
+          "q": "Mnemonic用什么框架",
+          "expected": "FastAPI",
+          "found_rank": 1,
+          "top1": "Mnemonic项目Phase1代码完成。兼容Hermes MemoryProvider插件架构，推",
+          "l1": false
+        },
+        {
+          "q": "Mnemonic搜索模式",
+          "expected": "三种",
+          "found_rank": 0,
+          "top1": "Mnemonic搜索: 三种模式vector/keyword/hybrid。Vector用Qwen3",
+          "l1": true
+        },
+        {
+          "q": "Mnemonic命名空间",
+          "expected": "4级",
+          "found_rank": 1,
+          "top1": "Mnemonic是AI Agent持久化记忆中间件。技术栈: FastAPI + PostgreSQ",
+          "l1": false
+        },
+        {
+          "q": "embedding模型",
+          "expected": "Qwen3-Embedding-8B",
+          "found_rank": 1,
+          "top1": "Mnemonic使用向量嵌入（Embedding）实现语义搜索",
+          "l1": false
+        },
+        {
+          "q": "embedding维度",
+          "expected": "4096",
+          "found_rank": 1,
+          "top1": "Mnemonic使用向量嵌入（Embedding）实现语义搜索",
+          "l1": false
+        },
+        {
+          "q": "Solana TPS正常值",
+          "expected": "1500",
+          "found_rank": 0,
+          "top1": "Solana TPS正常值约1500以上",
+          "l1": true
+        },
+        {
+          "q": "Boss对链上数据的态度",
+          "expected": "严禁捏造",
+          "found_rank": 3,
+          "top1": "Boss是Web3资深运营专家，主攻Solana生态数据与增长。使用中文沟通。偏好简洁回复，要求文案",
+          "l1": false
+        },
+        {
+          "q": "搜索用哪个API",
+          "expected": "Tavily",
+          "found_rank": 0,
+          "top1": "搜索使用Tavily API, endpoint: https://api.tavily.com/s",
+          "l1": true
+        },
+        {
+          "q": "Boss对搜索的要求",
+          "expected": "主动用Tavily",
+          "found_rank": null,
+          "top1": "Boss要求所有搜索任务主动使用Tavily API",
+          "l1": false
+        },
+        {
+          "q": "TG Bot是什么项目",
+          "expected": "coinAnalysis",
+          "found_rank": 2,
+          "top1": "Web3 TG Bot上线运营框架包含10步流程",
+          "l1": false
+        },
+        {
+          "q": "zSunKoin数据源",
+          "expected": "CCXT和WebSocket",
+          "found_rank": null,
+          "top1": "coinAnalysis是一个Solana Token分析Telegram Bot，代码约851行，",
+          "l1": false
+        },
+        {
+          "q": "zSunKoin存储",
+          "expected": "TimescaleDB",
+          "found_rank": 4,
+          "top1": "zSunKoin核心策略: 趋势跟随(不预测只跟随) + BTC Regime过滤 + ATR动态止",
+          "l1": false
+        },
+        {
+          "q": "Mnemonic用哪个向量库",
+          "expected": "pgvector",
+          "found_rank": 1,
+          "top1": "Mnemonic使用向量嵌入（Embedding）实现语义搜索",
+          "l1": false
+        },
+        {
+          "q": "Boss对Emoji的态度",
+          "expected": "限制使用",
+          "found_rank": null,
+          "top1": "Boss对代码质量要求高，注重单元测试覆盖率",
+          "l1": false
+        },
+        {
+          "q": "Mnemonic项目状态",
+          "expected": "Phase1完成",
+          "found_rank": null,
+          "top1": "Mnemonic项目Phase1代码完成。兼容Hermes MemoryProvider插件架构，推",
+          "l1": false
+        },
+        {
+          "q": "HNOE运行哲学",
+          "expected": "事实胜于营销",
+          "found_rank": 0,
+          "top1": "HNOE运行哲学: 事实胜于营销，数据高于情绪。严禁捏造链上数据，严禁对社区做无法兑现的承诺。处理F",
+          "l1": true
+        },
+        {
+          "q": "zSunKoin市场参考",
+          "expected": "BTC-USDT",
+          "found_rank": 0,
+          "top1": "zSunKoin是加密货币量化交易系统。技术栈: Python + CCXT/WebSocket +",
+          "l1": true
+        },
+        {
+          "q": "Mnemonic的embedding key更新",
+          "expected": "SiliconFlow",
+          "found_rank": 0,
+          "top1": "Mnemonic搜索: 三种模式vector/keyword/hybrid。Vector用Qwen3",
+          "l1": true
+        },
+        {
+          "q": "zSunKoin止损策略",
+          "expected": "ATR动态止损",
+          "found_rank": 0,
+          "top1": "zSunKoin核心策略: 趋势跟随(不预测只跟随) + BTC Regime过滤 + ATR动态止",
+          "l1": true
+        },
+        {
+          "q": "Boss对社区FUD的态度",
+          "expected": "用简练文字安抚",
+          "found_rank": null,
+          "top1": "FUD（Fear Uncertainty Doubt）是加密社区常见情绪，需要快速应对",
+          "l1": false
+        },
+        {
+          "q": "coinAnalysis代码行数",
+          "expected": "851行",
+          "found_rank": 0,
+          "top1": "coinAnalysis是一个Solana Token分析Telegram Bot，代码约851行，",
+          "l1": true
+        },
+        {
+          "q": "Mnemonic中文分词方案",
+          "expected": "jieba",
+          "found_rank": 0,
+          "top1": "Mnemonic是AI Agent持久化记忆中间件。技术栈: FastAPI + PostgreSQ",
+          "l1": true
+        },
+        {
+          "q": "hybrid搜索融合算法",
+          "expected": "RRF",
+          "found_rank": 0,
+          "top1": "Mnemonic搜索: 三种模式vector/keyword/hybrid。Vector用Qwen3",
+          "l1": true
+        },
+        {
+          "q": "zSunKoin有多少个Agent",
+          "expected": "6个",
+          "found_rank": 1,
+          "top1": "Redis Streams用于zSunKoin系统内部Agent间的实时消息传递",
+          "l1": false
+        },
+        {
+          "q": "Boss项目协作工具",
+          "expected": "飞书",
+          "found_rank": 0,
+          "top1": "Boss使用飞书群进行项目团队沟通",
+          "l1": true
+        },
+        {
+          "q": "zSunKoin LLM模型",
+          "expected": "Gemma-4",
+          "found_rank": 2,
+          "top1": "zSunKoin使用BTC Regime模型判断市场牛熊状态",
+          "l1": false
+        },
+        {
+          "q": "Mnemonic PG用户名",
+          "expected": "mnemonic",
+          "found_rank": 0,
+          "top1": "Mnemonic是AI Agent持久化记忆中间件。技术栈: FastAPI + PostgreSQ",
+          "l1": true
+        },
+        {
+          "q": "zSunKoin技术栈包含PyTorch吗",
+          "expected": "包含",
+          "found_rank": null,
+          "top1": "zSunKoin是加密货币量化交易系统。技术栈: Python + CCXT/WebSocket +",
+          "l1": false
+        }
+      ]
+    },
+    "hybrid": {
+      "total": 40,
+      "l1_hits": 16,
+      "l3_hits": 25,
+      "l1_rate": 0.4,
+      "l3_rate": 0.625,
+      "mrr": 0.518,
+      "details": [
+        {
+          "q": "Boss是做什么的",
+          "expected": "Boss是Web3资深运营专家",
+          "found_rank": null,
+          "top1": "Boss明确说: 你是运营，不是开发",
+          "l1": false
+        },
+        {
+          "q": "Boss的运营重点",
+          "expected": "用户增长",
+          "found_rank": null,
+          "top1": "Boss明确纠正: 你是运营，不是开发",
+          "l1": false
+        },
+        {
+          "q": "HNOE角色定位",
+          "expected": "运营，不是开发",
+          "found_rank": 0,
+          "top1": "Boss要求HNOE角色定位严格在运营范畴，不越界做开发",
+          "l1": true
+        },
+        {
+          "q": "Boss对文案的要求",
+          "expected": "去AI味",
+          "found_rank": 1,
+          "top1": "Boss要求运营文案用Degen视角或量化分析师口吻撰写",
+          "l1": false
+        },
+        {
+          "q": "Boss沟通语言",
+          "expected": "中文",
+          "found_rank": null,
+          "top1": "Boss要求社区沟通保持克制、精练、具备Crypto Native语感",
+          "l1": false
+        },
+        {
+          "q": "coinAnalysis是什么",
+          "expected": "Solana Token分析Telegram Bot",
+          "found_rank": 4,
+          "top1": "coinAnalysis针对Meme币有专门的分析能力",
+          "l1": false
+        },
+        {
+          "q": "coinAnalysis技术栈",
+          "expected": "Python+Redis",
+          "found_rank": null,
+          "top1": "coinAnalysis专注于Solana生态Token分析",
+          "l1": false
+        },
+        {
+          "q": "zSunKoin的交易周期",
+          "expected": "15分钟",
+          "found_rank": 2,
+          "top1": "zSunKoin交易标的: SOL-USDT和HYPE-USDT永续合约",
+          "l1": false
+        },
+        {
+          "q": "zSunKoin杠杆设置",
+          "expected": "3-10x自适应",
+          "found_rank": 0,
+          "top1": "zSunKoin杠杆范围为3-10x自适应",
+          "l1": true
+        },
+        {
+          "q": "zSunKoin核心策略",
+          "expected": "趋势跟随",
+          "found_rank": 0,
+          "top1": "zSunKoin核心策略是趋势跟随，不预测只跟随",
+          "l1": true
+        },
+        {
+          "q": "Mnemonic的API端口",
+          "expected": "8010",
+          "found_rank": 0,
+          "top1": "Mnemonic API服务端口是8010",
+          "l1": true
+        },
+        {
+          "q": "Mnemonic数据库端口",
+          "expected": "5434",
+          "found_rank": 1,
+          "top1": "Mnemonic API服务端口是8010",
+          "l1": false
+        },
+        {
+          "q": "Mnemonic用什么框架",
+          "expected": "FastAPI",
+          "found_rank": 0,
+          "top1": "Mnemonic是AI Agent持久化记忆中间件。技术栈: FastAPI + PostgreSQ",
+          "l1": true
+        },
+        {
+          "q": "Mnemonic搜索模式",
+          "expected": "三种",
+          "found_rank": 0,
+          "top1": "Mnemonic搜索: 三种模式vector/keyword/hybrid。Vector用Qwen3",
+          "l1": true
+        },
+        {
+          "q": "Mnemonic命名空间",
+          "expected": "4级",
+          "found_rank": 1,
+          "top1": "Mnemonic是AI Agent持久化记忆中间件。技术栈: FastAPI + PostgreSQ",
+          "l1": false
+        },
+        {
+          "q": "embedding模型",
+          "expected": "Qwen3-Embedding-8B",
+          "found_rank": 2,
+          "top1": "Mnemonic使用向量嵌入（Embedding）实现语义搜索",
+          "l1": false
+        },
+        {
+          "q": "embedding维度",
+          "expected": "4096",
+          "found_rank": 1,
+          "top1": "Mnemonic使用向量嵌入（Embedding）实现语义搜索",
+          "l1": false
+        },
+        {
+          "q": "Solana TPS正常值",
+          "expected": "1500",
+          "found_rank": 0,
+          "top1": "Solana TPS正常值约1500以上",
+          "l1": true
+        },
+        {
+          "q": "Boss对链上数据的态度",
+          "expected": "严禁捏造",
+          "found_rank": null,
+          "top1": "Boss要求事实胜于营销，数据高于情绪",
+          "l1": false
+        },
+        {
+          "q": "搜索用哪个API",
+          "expected": "Tavily",
+          "found_rank": 0,
+          "top1": "Boss要求所有搜索任务主动使用Tavily API，不要用浏览器搜索引擎",
+          "l1": true
+        },
+        {
+          "q": "Boss对搜索的要求",
+          "expected": "主动用Tavily",
+          "found_rank": null,
+          "top1": "Boss要求: 所有搜索任务主动使用Tavily API，不要用浏览器搜索引擎",
+          "l1": false
+        },
+        {
+          "q": "TG Bot是什么项目",
+          "expected": "coinAnalysis",
+          "found_rank": 3,
+          "top1": "Web3 TG Bot上线运营框架包含10步流程",
+          "l1": false
+        },
+        {
+          "q": "zSunKoin数据源",
+          "expected": "CCXT和WebSocket",
+          "found_rank": null,
+          "top1": "zSunKoin使用BTC-USDT作为市场状态参考指标",
+          "l1": false
+        },
+        {
+          "q": "zSunKoin存储",
+          "expected": "TimescaleDB",
+          "found_rank": 2,
+          "top1": "zSunKoin使用BTC-USDT作为市场状态参考指标",
+          "l1": false
+        },
+        {
+          "q": "Mnemonic用哪个向量库",
+          "expected": "pgvector",
+          "found_rank": 1,
+          "top1": "Mnemonic使用向量嵌入（Embedding）实现语义搜索",
+          "l1": false
+        },
+        {
+          "q": "Boss对Emoji的态度",
+          "expected": "限制使用",
+          "found_rank": null,
+          "top1": "Boss明确纠正: 你是运营，不是开发",
+          "l1": false
+        },
+        {
+          "q": "Mnemonic项目状态",
+          "expected": "Phase1完成",
+          "found_rank": null,
+          "top1": "Mnemonic项目Phase1代码完成。兼容Hermes MemoryProvider插件架构，推",
+          "l1": false
+        },
+        {
+          "q": "HNOE运行哲学",
+          "expected": "事实胜于营销",
+          "found_rank": 0,
+          "top1": "HNOE运行哲学: 事实胜于营销，数据高于情绪。严禁捏造链上数据，严禁对社区做无法兑现的承诺。处理F",
+          "l1": true
+        },
+        {
+          "q": "zSunKoin市场参考",
+          "expected": "BTC-USDT",
+          "found_rank": 0,
+          "top1": "zSunKoin使用BTC-USDT作为市场状态参考指标",
+          "l1": true
+        },
+        {
+          "q": "Mnemonic的embedding key更新",
+          "expected": "SiliconFlow",
+          "found_rank": null,
+          "top1": "Mnemonic API服务端口是8010",
+          "l1": false
+        },
+        {
+          "q": "zSunKoin止损策略",
+          "expected": "ATR动态止损",
+          "found_rank": 0,
+          "top1": "zSunKoin使用ATR动态止损",
+          "l1": true
+        },
+        {
+          "q": "Boss对社区FUD的态度",
+          "expected": "用简练文字安抚",
+          "found_rank": null,
+          "top1": "Boss偏好用极简文字安抚或引导社区情绪",
+          "l1": false
+        },
+        {
+          "q": "coinAnalysis代码行数",
+          "expected": "851行",
+          "found_rank": 1,
+          "top1": "coinAnalysis数据源使用Birdeye API",
+          "l1": false
+        },
+        {
+          "q": "Mnemonic中文分词方案",
+          "expected": "jieba",
+          "found_rank": 0,
+          "top1": "Mnemonic是AI Agent持久化记忆中间件。技术栈: FastAPI + PostgreSQ",
+          "l1": true
+        },
+        {
+          "q": "hybrid搜索融合算法",
+          "expected": "RRF",
+          "found_rank": 0,
+          "top1": "Mnemonic搜索: 三种模式vector/keyword/hybrid。Vector用Qwen3",
+          "l1": true
+        },
+        {
+          "q": "zSunKoin有多少个Agent",
+          "expected": "6个",
+          "found_rank": 0,
+          "top1": "zSunKoin核心策略: 趋势跟随(不预测只跟随) + BTC Regime过滤 + ATR动态止",
+          "l1": true
+        },
+        {
+          "q": "Boss项目协作工具",
+          "expected": "飞书",
+          "found_rank": 0,
+          "top1": "Boss使用飞书群进行项目团队沟通",
+          "l1": true
+        },
+        {
+          "q": "zSunKoin LLM模型",
+          "expected": "Gemma-4",
+          "found_rank": 0,
+          "top1": "zSunKoin是加密货币量化交易系统。技术栈: Python + CCXT/WebSocket +",
+          "l1": true
+        },
+        {
+          "q": "Mnemonic PG用户名",
+          "expected": "mnemonic",
+          "found_rank": 3,
+          "top1": "Mnemonic支持4级命名空间隔离: client_id/user_id/agent_id/ses",
+          "l1": false
+        },
+        {
+          "q": "zSunKoin技术栈包含PyTorch吗",
+          "expected": "包含",
+          "found_rank": null,
+          "top1": "zSunKoin是加密货币量化交易系统。技术栈: Python + CCXT/WebSocket +",
+          "l1": false
+        }
+      ]
+    }
+  }
+}

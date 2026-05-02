@@ -16,6 +16,7 @@ from sqlalchemy import (
     func,
 )
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
+from sqlalchemy.dialects.postgresql import TSVECTOR
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
@@ -39,13 +40,17 @@ class Memory(Base):
     
     # 记忆内容
     content: Mapped[str] = mapped_column(Text, nullable=False)
+    content_hash: Mapped[str] = mapped_column(String(32), nullable=False, index=True)  # MD5去重
     
     # 元数据
     memory_type: Mapped[str] = mapped_column(String(50), default="fact")
     importance: Mapped[float] = mapped_column(Float, default=0.5)
     
-    # 向量嵌入 (4096 for Qwen3-Embedding-8B)
-    embedding: Mapped[Optional[list[float]]] = mapped_column(Vector(4096))
+    # 向量嵌入 (1024 for BGE-M3)
+    embedding: Mapped[Optional[list[float]]] = mapped_column(Vector(1024))
+    
+    # jieba中文分词tokens (用于关键词搜索)
+    content_tokens: Mapped[Optional[dict]] = mapped_column(TSVECTOR)
     
     # 时间戳
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
@@ -87,4 +92,33 @@ class MemoryAccessLog(Base):
     
     __table_args__ = (
         Index("idx_access_logs_memory", "memory_id", accessed_at.desc()),
+    )
+
+
+class Entity(Base):
+    """Entity store for mem0-style entity boosting."""
+    
+    __tablename__ = "entities"
+    
+    id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid4)
+    
+    # 命名空间隔离
+    client_id: Mapped[str] = mapped_column(String(255), nullable=False)
+    user_id: Mapped[str] = mapped_column(String(255), nullable=False)
+    agent_id: Mapped[str] = mapped_column(String(255), nullable=False)
+    
+    # 实体信息
+    name: Mapped[str] = mapped_column(String(500), nullable=False)
+    entity_type: Mapped[str] = mapped_column(String(100), nullable=False, default="UNKNOWN")
+    
+    # 关联的记忆ID列表（JSON数组）
+    linked_memory_ids: Mapped[str] = mapped_column(Text, nullable=False, default="[]")
+    
+    # 时间戳
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    
+    __table_args__ = (
+        Index("idx_entities_namespace", "client_id", "user_id", "agent_id"),
+        Index("idx_entities_name", "name", "entity_type"),
     )
