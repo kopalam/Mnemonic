@@ -51,8 +51,8 @@ MNEMONIC_EMBEDDING_API_KEY=<your-key> \
 | ORM | SQLAlchemy 2.0 (async) |
 | 数据库 | PostgreSQL 16 |
 | 向量引擎 | pgvector |
-| LLM | Gemma-4 (自部署 `120.25.63.187:9119`) |
-| Embedding | Qwen3-Embedding-8B via SiliconFlow (`api.siliconflow.cn`) |
+|| LLM | Gemma-4 (自部署) |
+|| Embedding | Qwen3-Embedding-8B via SiliconFlow |
 | 向量维度 | **4096** |
 | 容器 | Docker Compose |
 
