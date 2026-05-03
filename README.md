@@ -189,3 +189,59 @@ Phase 2 考虑降维投影或 Matryoshka 维度后再建索引。
 ## License
 
 MIT
+
+## Hermes Agent 集成
+
+Mnemonic 可作为 Hermes Agent 的记忆后端，提供跨会话的持久化记忆能力。
+
+### 前置条件
+
+1. Mnemonic API 服务已启动（默认 `http://localhost:8010`）
+2. PostgreSQL + pgvector 已运行
+
+### 配置步骤
+
+#### 1. 创建配置文件
+
+在 `$HERMES_HOME` 目录创建 `mnemonic.json`：
+
+```bash
+# HERMES_HOME 通常是 ~/.hermes 或 ~/.hermes/profiles/oper
+cat > ~/.hermes/mnemonic.json << 'EOF'
+{
+  "api_url": "http://localhost:8010",
+  "namespace": "hermes:boss:hnoe:*"
+}
+EOF
+```
+
+**Namespace 格式：** `client_id:user_id:agent_id:session_id`，`*` 表示通配。
+
+#### 2. 启用 Provider
+
+编辑 `$HERMES_HOME/config.yaml`，设置 memory provider：
+
+```yaml
+memory:
+  provider: mnemonic
+```
+
+#### 3. 验证集成
+
+重启 Hermes 后，记忆工具会自动切换到 Mnemonic：
+
+```
+mnemonic_search(query="Solana 运营", mode="keyword")
+mnemonic_extract(text="Boss 要求 TG Bot 用 Markdown 格式回复")
+```
+
+### 可用工具
+
+| 工具 | 说明 |
+|------|------|
+| `mnemonic_search` | 关键词/向量搜索记忆 |
+| `mnemonic_extract` | 从文本提取事实并存储 |
+
+### 降级机制
+
+Mnemonic API 不可用时，自动回退到 Hermes 内置记忆（MEMORY.md / USER.md）。
