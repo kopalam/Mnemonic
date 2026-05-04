@@ -1,0 +1,74 @@
+{
+  "name": "mnemonic",
+  "version": "0.2.0",
+  "description": "AI Agent persistent memory system with vector search and namespace isolation",
+  "author": "kopalam",
+  "repository": "https://github.com/kopalam/Mnemonic",
+  "license": "MIT",
+  
+  "hermes": {
+    "min_version": "0.1.0",
+    "plugin_type": "memory",
+    "provides": ["memory.provider"],
+    "config_schema": {
+      "api_url": {
+        "type": "string",
+        "default": "http://localhost:8010",
+        "description": "Mnemonic API endpoint"
+      },
+      "namespace": {
+        "type": "string",
+        "default": "hermes:boss:hnoe:*",
+        "description": "Four-level namespace: client:user:agent:session"
+      }
+    }
+  },
+  
+  "requirements": {
+    "external": [
+      {
+        "name": "PostgreSQL",
+        "version": ">=14",
+        "extension": "pgvector",
+        "description": "Vector storage backend"
+      },
+      {
+        "name": "Docker",
+        "optional": true,
+        "description": "Container runtime for API"
+      }
+    ],
+    "embedding": {
+      "provider": "siliconflow",
+      "model": "Qwen/Qwen3-Embedding-0.6B",
+      "dimension": 1024,
+      "api_key_env": "SILICONFLOW_API_KEY"
+    }
+  },
+  
+  "install": {
+    "script": "install.sh",
+    "docker_compose": true,
+    "post_install": [
+      "Configure .env with database credentials",
+      "Run: docker-compose up -d",
+      "Add 'provider: mnemonic' to Hermes config.yaml"
+    ]
+  },
+  
+  "endpoints": {
+    "health": "/health",
+    "memories": "/memories",
+    "search": "/memories/search",
+    "entities": "/entities"
+  },
+  
+  "features": [
+    "Vector similarity search (pgvector)",
+    "Keyword search (TSVector + jieba)",
+    "Four-level namespace isolation",
+    "Entity extraction and linking",
+    "Access logging for WRRF weighting",
+    "Auto-initialization on startup"
+  ]
+}
