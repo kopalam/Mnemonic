@@ -3,10 +3,10 @@
 
 # 存储层
 database:
-  host: "${MNEMONIC_DB_HOST:-localhost}"
-  port: "${MNEMONIC_DB_PORT:-5434}"
-  name: "mnemonic"
-  user: "mnemonic"
+  host: "${MNEMONIC_DB_HOST:-120.25.63.187}"
+  port: "${MNEMONIC_DB_PORT:-8771}"
+  name: "${MNEMONIC_DB_NAME:-mnemonic}"
+  user: "${MNEMONIC_DB_USER:-funkits}"
   password: "${MNEMONIC_DB_PASSWORD}"
 
   # 连接池
