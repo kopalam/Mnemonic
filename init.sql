@@ -1,5 +1,5 @@
--- Mnemonic Schema v0.1
--- Phase 1: Core Tables + pgvector
+-- Mnemonic Schema v0.2
+-- Auto-initialized by SQLAlchemy, this file is for reference only
 
 -- Enable pgvector
 CREATE EXTENSION IF NOT EXISTS vector;
@@ -8,7 +8,7 @@ CREATE EXTENSION IF NOT EXISTS vector;
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- 记忆表
-CREATE TABLE memories (
+CREATE TABLE IF NOT EXISTS memories (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     
     -- 四级命名空间隔离
@@ -19,13 +19,17 @@ CREATE TABLE memories (
     
     -- 记忆内容
     content TEXT NOT NULL,
+    content_hash VARCHAR(32) NOT NULL,  -- MD5去重
     
     -- 元数据
-    memory_type VARCHAR(50) DEFAULT 'fact',  -- fact/preference/rule/context
+    memory_type VARCHAR(50) DEFAULT 'fact',
     importance FLOAT DEFAULT 0.5,
     
-    -- 向量嵌入 (4096 for Qwen3-Embedding-8B)
-    embedding vector(4096),
+    -- 向量嵌入 (1024 for Qwen3-Embedding-0.6B)
+    embedding vector(1024),
+    
+    -- jieba中文分词tokens (用于关键词搜索)
+    content_tokens TSVECTOR,
     
     -- 时间戳
     created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -37,24 +41,22 @@ CREATE TABLE memories (
 );
 
 -- 命名空间索引 (复合索引)
-CREATE INDEX idx_memories_namespace ON memories(client_id, user_id, agent_id, session_id) 
+CREATE INDEX IF NOT EXISTS idx_memories_namespace ON memories(client_id, user_id, agent_id, session_id) 
     WHERE deleted_at IS NULL;
 
 -- 时间索引 (时序衰减查询)
-CREATE INDEX idx_memories_created ON memories(created_at DESC) 
+CREATE INDEX IF NOT EXISTS idx_memories_created ON memories(created_at DESC) 
     WHERE deleted_at IS NULL;
 
 -- 类型索引
-CREATE INDEX idx_memories_type ON memories(memory_type) 
+CREATE INDEX IF NOT EXISTS idx_memories_type ON memories(memory_type) 
     WHERE deleted_at IS NULL;
 
--- 向量索引 (exact search for dim>2000, add HNSW after partial embedding projection in Phase 2)
--- CREATE INDEX idx_memories_embedding ON memories 
---     USING hnsw (embedding vector_cosine_ops)
---     WITH (m = 16, ef_construction = 64);
+-- 内容哈希索引 (去重)
+CREATE INDEX IF NOT EXISTS idx_memories_content_hash ON memories(content_hash);
 
 -- 记忆访问日志 (Phase 2: WRRF权重计算)
-CREATE TABLE memory_access_logs (
+CREATE TABLE IF NOT EXISTS memory_access_logs (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     memory_id UUID NOT NULL REFERENCES memories(id) ON DELETE CASCADE,
     
@@ -66,7 +68,31 @@ CREATE TABLE memory_access_logs (
     similarity_score FLOAT
 );
 
-CREATE INDEX idx_access_logs_memory ON memory_access_logs(memory_id, accessed_at DESC);
+CREATE INDEX IF NOT EXISTS idx_access_logs_memory ON memory_access_logs(memory_id, accessed_at DESC);
+
+-- 实体表 (Entity Boost)
+CREATE TABLE IF NOT EXISTS entities (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    
+    -- 命名空间隔离
+    client_id VARCHAR(255) NOT NULL,
+    user_id VARCHAR(255) NOT NULL,
+    agent_id VARCHAR(255) NOT NULL,
+    
+    -- 实体信息
+    name VARCHAR(500) NOT NULL,
+    entity_type VARCHAR(100) NOT NULL DEFAULT 'UNKNOWN',
+    
+    -- 关联的记忆ID列表（JSON数组）
+    linked_memory_ids TEXT NOT NULL DEFAULT '[]',
+    
+    -- 时间戳
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_entities_namespace ON entities(client_id, user_id, agent_id);
+CREATE INDEX IF NOT EXISTS idx_entities_name ON entities(name, entity_type);
 
 -- 更新时间触发器
 CREATE OR REPLACE FUNCTION update_updated_at()
@@ -82,8 +108,13 @@ CREATE TRIGGER trigger_memories_updated
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at();
 
+CREATE TRIGGER trigger_entities_updated
+    BEFORE UPDATE ON entities
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at();
+
 -- 查询统计视图 (Phase 2: 自适应权重)
-CREATE VIEW memory_stats AS
+CREATE OR REPLACE VIEW memory_stats AS
 SELECT 
     m.id,
     m.client_id,

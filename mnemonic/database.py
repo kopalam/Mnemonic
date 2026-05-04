@@ -43,16 +43,31 @@ async def get_session_context() -> AsyncGenerator[AsyncSession, None]:
 
 
 async def init_db() -> None:
-    """Initialize database (create tables if not exist)."""
+    """Initialize database: create extensions and tables if not exist."""
     from mnemonic.models import Base
+    from sqlalchemy import text
+    import logging
+    
+    logger = logging.getLogger("mnemonic")
     
     async with engine.begin() as conn:
-        # 先创建pgvector扩展
-        await conn.execute(__import__('sqlalchemy').text('CREATE EXTENSION IF NOT EXISTS vector'))
-        await conn.commit()
-    
-    async with engine.begin() as conn:
+        # Create extensions
+        logger.info("Creating extensions...")
+        await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
+        await conn.execute(text("CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\""))
+        logger.info("✓ Extensions created")
+        
+        # Create all tables
+        logger.info("Creating tables...")
         await conn.run_sync(Base.metadata.create_all)
+        logger.info("✓ Tables created")
+        
+        # Verify tables
+        result = await conn.execute(text("""
+            SELECT tablename FROM pg_tables WHERE schemaname = 'public'
+        """))
+        tables = [row[0] for row in result]
+        logger.info(f"Tables: {tables}")
 
 
 async def close_db() -> None:
