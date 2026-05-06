@@ -1,0 +1,29 @@
+{
+  "timestamp": "2026-05-06T13:35:40.860450",
+  "d1_extraction": {
+    "precision": 0.85,
+    "recall": 0.8,
+    "f1": 0.8242424242424243
+  },
+  "d2_conflict_resolution": {
+    "total": 5,
+    "correct": 5,
+    "accuracy": 1.0
+  },
+  "d3_robustness": {
+    "total": 5,
+    "filtered": 5,
+    "noise_rate": 0.0
+  },
+  "d4_relevance": {
+    "l1": 0.82,
+    "l3": 0.88,
+    "mrr": 0.88
+  },
+  "performance": {
+    "window_ms": 0.02287149429321289,
+    "conflict_ms": 0.0021886825561523438,
+    "decay_ms": 0.002009868621826172
+  },
+  "overall_pass": true
+}

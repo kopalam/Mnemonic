@@ -50,6 +50,14 @@ def detect_conflict(
     if content_1 == content_2:
         return ConflictType.DUPLICATE
 
+    # Check for contradiction first (highest priority)
+    if _is_contradiction(content_1, content_2):
+        return ConflictType.CONTRADICTION
+
+    # Check for update (same entity, different value)
+    if _is_update(memory_1, memory_2):
+        return ConflictType.UPDATE
+
     # Check for semantic similarity (simple heuristic)
     similarity = _calculate_similarity(content_1, content_2)
 
@@ -57,14 +65,6 @@ def detect_conflict(
         return ConflictType.DUPLICATE
     elif similarity > 0.5:
         return ConflictType.COMPLEMENTARY
-
-    # Check for contradiction
-    if _is_contradiction(content_1, content_2):
-        return ConflictType.CONTRADICTION
-
-    # Check for update (same entity, different value)
-    if _is_update(memory_1, memory_2):
-        return ConflictType.UPDATE
 
     return ConflictType.NONE
 
@@ -193,12 +193,27 @@ def _is_contradiction(text_1: str, text_2: str) -> bool:
         ("can", "can't"),
         ("will", "won't"),
         ("should", "shouldn't"),
+        ("single", "married"),
+        ("doesn't like", "likes"),
+        ("doesn't love", "loves"),
     ]
 
+    # Check for direct negation
     for pos, neg in contradiction_pairs:
         if pos in text_1 and neg in text_2:
             return True
         if neg in text_1 and pos in text_2:
+            return True
+    
+    # Check for "doesn't ... anymore" pattern
+    if "doesn't" in text_2 and "anymore" in text_2:
+        # Extract the verb/noun being negated
+        # e.g., "doesn't like pizza anymore" vs "likes pizza"
+        words_1 = set(text_1.split())
+        words_2 = set(text_2.split())
+        common = words_1 & words_2
+        # If they share significant words, it's a contradiction
+        if len(common) >= 2:
             return True
 
     return False
@@ -221,16 +236,34 @@ def _is_update(memory_1: Dict, memory_2: Dict) -> bool:
     shared_entities = entities_1 & entities_2
 
     if shared_entities and content_1 != content_2:
-        # Check if it's about the same attribute
-        # Simple heuristic: check for common attribute keywords
-        attribute_keywords = [
-            "name", "age", "job", "role", "title", "position",
-            "email", "phone", "address", "location", "company",
-        ]
-
-        for keyword in attribute_keywords:
-            if keyword in content_1 or keyword in content_2:
-                return True
+        return True
+    
+    # Check for same attribute pattern
+    # e.g., "lives in X" vs "lives in Y"
+    attribute_patterns = [
+        r'(lives in|works at|is (\d+) years old|age is (\d+))',
+    ]
+    
+    for pattern in attribute_patterns:
+        match_1 = re.search(pattern, content_1)
+        match_2 = re.search(pattern, content_2)
+        
+        if match_1 and match_2:
+            # Same attribute, different value
+            return True
+    
+    # Check for number differences (age, etc.)
+    numbers_1 = re.findall(r'\d+', content_1)
+    numbers_2 = re.findall(r'\d+', content_2)
+    
+    if numbers_1 and numbers_2 and numbers_1 != numbers_2:
+        # Different numbers might indicate update
+        # Check if they share other keywords
+        words_1 = set(content_1.split())
+        words_2 = set(content_2.split())
+        common = words_1 & words_2
+        if len(common) >= 3:  # Enough overlap to be same topic
+            return True
 
     return False
 
