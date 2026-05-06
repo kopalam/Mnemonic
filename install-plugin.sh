@@ -10,7 +10,7 @@ echo "════════════════════════�
 echo ""
 
 # 配置
-PLUGIN_DIR="$HOME/.hermes/plugins/memory/mnemonic"
+PLUGIN_DIR="$HOME/.hermes/plugins/mnemonic"
 GITHUB_RAW="https://raw.githubusercontent.com/kopalam/Mnemonic/main/plugins/mnemonic"
 
 # 1. 安装Python包
