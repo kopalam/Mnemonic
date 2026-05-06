@@ -13,12 +13,24 @@ echo ""
 PLUGIN_DIR="$HOME/.hermes/plugins/memory/mnemonic"
 GITHUB_RAW="https://raw.githubusercontent.com/kopalam/Mnemonic/main/plugins/mnemonic"
 
-# 1. 创建目录
-echo "[1/6] 创建插件目录..."
+# 1. 安装Python包
+echo "[1/7] 安装 hermes-mnemonic Python包..."
+if command -v pip &> /dev/null; then
+    pip install hermes-mnemonic -q
+    echo "  ✓ 已安装 hermes-mnemonic"
+elif command -v pip3 &> /dev/null; then
+    pip3 install hermes-mnemonic -q
+    echo "  ✓ 已安装 hermes-mnemonic"
+else
+    echo "  ✗ pip/pip3 未找到，跳过Python包安装"
+fi
+
+# 2. 创建目录
+echo "[2/7] 创建插件目录..."
 mkdir -p "$PLUGIN_DIR"
 
-# 2. 下载插件文件
-echo "[2/6] 下载插件文件..."
+# 3. 下载插件文件
+echo "[3/7] 下载插件文件..."
 cd "$PLUGIN_DIR"
 
 echo "  - 下载 __init__.py"
@@ -30,8 +42,8 @@ curl -fsSL "$GITHUB_RAW/plugin.yaml" -o plugin.yaml
 echo "  - 下载 README.md"
 curl -fsSL "$GITHUB_RAW/README.md" -o README.md
 
-# 3. 配置mnemonic.json（如果不存在）
-echo "[3/6] 配置Mnemonic API地址..."
+# 4. 配置mnemonic.json（如果不存在）
+echo "[4/7] 配置Mnemonic API地址..."
 MNEMONIC_CONFIG="$HOME/.hermes/mnemonic.json"
 
 if [ ! -f "$MNEMONIC_CONFIG" ]; then
@@ -58,8 +70,8 @@ else
     API_URL=$(grep -o '"api_url"[[:space:]]*:[[:space:]]*"[^"]*"' "$MNEMONIC_CONFIG" | cut -d'"' -f4)
 fi
 
-# 4. 配置Hermes
-echo "[4/6] 配置Hermes..."
+# 5. 配置Hermes
+echo "[5/7] 配置Hermes..."
 if command -v hermes &> /dev/null; then
     hermes config set memory.provider mnemonic 2>/dev/null || true
     hermes config set memory.memory_enabled true 2>/dev/null || true
@@ -70,8 +82,8 @@ else
     echo "  ! hermes命令未找到，请手动配置config.yaml"
 fi
 
-# 5. 检查服务端连通性
-echo "[5/6] 检查Mnemonic API服务连通性..."
+# 6. 检查服务端连通性
+echo "[6/7] 检查Mnemonic API服务连通性..."
 
 if [ -n "$API_URL" ]; then
     # 尝试访问health endpoint
@@ -92,8 +104,8 @@ else
     echo "  ! 未找到API地址配置，跳过连通性检查"
 fi
 
-# 6. 验证安装
-echo "[6/6] 验证安装..."
+# 7. 验证安装
+echo "[7/7] 验证安装..."
 if command -v hermes &> /dev/null; then
     echo ""
     hermes memory status
