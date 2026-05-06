@@ -148,12 +148,27 @@ class EmbeddingService:
     
     def __init__(self):
         emb_cfg = config["vector"]["embedding"]
+        api_key = emb_cfg["api_key"]
+        base_url = emb_cfg["base_url"]
+        
+        # 验证必要配置
+        if not api_key or api_key == "dummy":
+            import os
+            # 尝试从环境变量获取
+            api_key = os.getenv("MNEMONIC_EMBEDDING_API_KEY", "dummy")
+            if api_key == "dummy":
+                import logging
+                logging.getLogger(__name__).warning(
+                    "MNEMONIC_EMBEDDING_API_KEY not set, using dummy key. "
+                    "Vector search will use fallback pseudo-embedding."
+                )
+        
         self.client = AsyncOpenAI(
-            api_key=emb_cfg["api_key"],
-            base_url=emb_cfg["base_url"],
+            api_key=api_key,
+            base_url=base_url,
         )
         self.model = emb_cfg["model"]
-        self.dim = emb_cfg["dim"]
+        self.dim = int(emb_cfg["dim"])  # 确保是整数
         self._fallback = False
     
     async def embed(self, text: str) -> list[float]:

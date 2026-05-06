@@ -17,11 +17,11 @@ database:
 vector:
   provider: "pgvector"
 
-  # Embedding (SiliconFlow + Qwen3-Embedding-0.6B)
+  # Embedding (支持 SiliconFlow 或本地模型)
   embedding:
-    base_url: "https://api.siliconflow.cn/v1"
-    api_key: "${MNEMONIC_EMBEDDING_API_KEY}"
-    model: "Qwen/Qwen3-Embedding-0.6B"
+    base_url: "${MNEMONIC_EMBEDDING_BASE_URL:-https://api.siliconflow.cn/v1}"
+    api_key: "${MNEMONIC_EMBEDDING_API_KEY:-dummy}"
+    model: "${MNEMONIC_EMBEDDING_MODEL:-Qwen/Qwen3-Embedding-0.6B}"
     dim: 1024
 
   index_type: "ivfflat"
