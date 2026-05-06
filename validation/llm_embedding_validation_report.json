@@ -1,0 +1,153 @@
+{
+  "timestamp": "2026-05-06T14:18:15.481486",
+  "method": "real_llm_embedding",
+  "d1_extraction": {
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1": 0.0,
+    "target": 0.75,
+    "status": "FAIL"
+  },
+  "d2_conflict": {
+    "accuracy": 0.5,
+    "target": 0.9,
+    "status": "FAIL"
+  },
+  "d3_robustness": {
+    "noise_rate": 0.0,
+    "target": 0.1,
+    "status": "PASS"
+  },
+  "extraction_results": [
+    {
+      "id": "real_001",
+      "extracted": 2,
+      "expected": 2,
+      "window": {
+        "context_window": 5,
+        "similar_memories": 5,
+        "mode": "fast"
+      }
+    },
+    {
+      "id": "real_002",
+      "extracted": 2,
+      "expected": 2,
+      "window": {
+        "context_window": 5,
+        "similar_memories": 5,
+        "mode": "fast"
+      }
+    },
+    {
+      "id": "real_003",
+      "extracted": 1,
+      "expected": 1,
+      "window": {
+        "context_window": 10,
+        "similar_memories": 10,
+        "mode": "standard"
+      }
+    },
+    {
+      "id": "real_004",
+      "extracted": 2,
+      "expected": 2,
+      "window": {
+        "context_window": 10,
+        "similar_memories": 10,
+        "mode": "standard"
+      }
+    },
+    {
+      "id": "real_005",
+      "extracted": 3,
+      "expected": 3,
+      "window": {
+        "context_window": 5,
+        "similar_memories": 5,
+        "mode": "fast"
+      }
+    },
+    {
+      "id": "real_006",
+      "extracted": 2,
+      "expected": 1,
+      "window": {
+        "context_window": 5,
+        "similar_memories": 5,
+        "mode": "fast"
+      }
+    },
+    {
+      "id": "real_007",
+      "extracted": 2,
+      "expected": 2,
+      "window": {
+        "context_window": 5,
+        "similar_memories": 5,
+        "mode": "fast"
+      }
+    },
+    {
+      "id": "real_008",
+      "extracted": 2,
+      "expected": 2,
+      "window": {
+        "context_window": 5,
+        "similar_memories": 5,
+        "mode": "fast"
+      }
+    },
+    {
+      "id": "real_009",
+      "extracted": 2,
+      "expected": 2,
+      "window": {
+        "context_window": 5,
+        "similar_memories": 5,
+        "mode": "fast"
+      }
+    },
+    {
+      "id": "real_010",
+      "extracted": 1,
+      "expected": 1,
+      "window": {
+        "context_window": 5,
+        "similar_memories": 5,
+        "mode": "fast"
+      }
+    },
+    {
+      "id": "real_011",
+      "extracted": 3,
+      "expected": 2,
+      "window": {
+        "context_window": 5,
+        "similar_memories": 5,
+        "mode": "fast"
+      }
+    },
+    {
+      "id": "real_conflict_001",
+      "extracted": 1,
+      "expected": 1,
+      "window": {
+        "context_window": 5,
+        "similar_memories": 5,
+        "mode": "fast"
+      }
+    },
+    {
+      "id": "real_conflict_002",
+      "extracted": 0,
+      "expected": 1,
+      "window": {
+        "context_window": 5,
+        "similar_memories": 5,
+        "mode": "fast"
+      }
+    }
+  ]
+}

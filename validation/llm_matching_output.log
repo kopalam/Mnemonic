@@ -1,0 +1,133 @@
+============================================================
+Mnemonic Validation - Real LLM + LLM Semantic Matching
+============================================================
+
+Dataset Statistics:
+  Total Conversations: 15
+  Source Sessions: 5
+
+============================================================
+[D1] Extraction Quality (LLM + LLM Matching)
+============================================================
+
+Processing real_001...
+  Window: fast (m=5, s=5)
+  Extracted: 2 memories
+  ✓ Matched (sim=1.00): Hermes PluginManager 的插件加载机制是通过自动扫描 Bundled、User、Project 和 p...
+  ✓ Matched (sim=1.00): 在 Hermes PluginManager 中，插件会被自动发现，但不会自动启用，必须经过显式配置才能使用。...
+
+Processing real_002...
+  Window: fast (m=5, s=5)
+  Extracted: 2 memories
+  ✗ No match (best_sim=0.70) for: Vector搜索L1从13.3%提升到53.3%的原因是API Key无效导致fallback到伪向量...
+  ✓ Matched (sim=1.00): User 遇到了 Vector 搜索 L1 准确率仅为 13.3% 的问题，经排查原因是 SiliconFlow Emb...
+
+Processing real_003...
+  Window: standard (m=10, s=10)
+  Extracted: 1 memories
+  ✓ Matched (sim=1.00): 在2026年5月6日的修复后，Vector搜索效果显著提升：L1从13.3%提升至53.3%，L3从0.22提升至0.6...
+
+Processing real_004...
+  Window: standard (m=10, s=10)
+  Extracted: 2 memories
+  ✓ Matched (sim=1.00): 2026年5月6日，Mnemonic四维测试结果显示：D1 Extraction F1为0.974，D2 Recency...
+  ✓ Matched (sim=1.00): 在Mnemonic测试中，Keyword搜索的表现优于Vector搜索，其主要原因是BGE-M3中文embedding存...
+
+Processing real_005...
+  Window: fast (m=5, s=5)
+  Extracted: 3 memories
+  ✓ Matched (sim=1.00): Mnemonic的架构设计采用三组件模式，由Mnemonic Server、Mnemonic SDK以及Mnemonic...
+  ✓ Matched (sim=1.00): Mnemonic使用PostgreSQL结合pgvector作为其存储方案。...
+  ✓ Matched (sim=1.00): Mnemonic与mem0的主要差异在于其具备遗忘机制，该机制通过TTL（生存时间）、importance decay（...
+
+Processing real_006...
+  Window: fast (m=5, s=5)
+  Extracted: 2 memories
+  ✓ Matched (sim=0.90): 在2026年5月6日，User发现Postgres数据库的数据丢失，原本拥有的17条记录减少到仅剩2条测试数据。...
+
+Processing real_007...
+  Window: fast (m=5, s=5)
+  Extracted: 2 memories
+  ✓ Matched (sim=1.00): 从MEMORY block导入14条核心记忆时，需要添加x-namespace header。...
+  ✓ Matched (sim=1.00): 用于数据恢复或相关操作的API endpoint是http://localhost:8010。...
+
+Processing real_008...
+  Window: fast (m=5, s=5)
+  Extracted: 2 memories
+  ✓ Matched (sim=1.00): User了解并讨论了mem0的技术特性，其优势包括具备四操作语义（ADD/UPDATE/DELETE/NOOP）的生产验...
+  ✓ Matched (sim=1.00): User了解mem0的潜在劣势，包括每次写入需进行3次LLM调用导致成本较高、缺乏遗忘机制、强依赖Neo4j数据库以及存...
+
+Processing real_009...
+  Window: fast (m=5, s=5)
+  Extracted: 2 memories
+  ✓ Matched (sim=1.00): Hermes MemoryProvider 必须实现的方法包括：name、is_available()、initiali...
+  ✓ Matched (sim=1.00): Hermes MemoryProvider 包含可选的 Hooks 方法：prefetch()、sync_turn()、...
+
+Processing real_010...
+  Window: fast (m=5, s=5)
+  Extracted: 1 memories
+  ✓ Matched (sim=1.00): Mnemonic定义了六种记忆类型，分别是：Preference（偏好）、Fact（事实）、Event（事件）、Cont...
+
+Processing real_011...
+  Window: fast (m=5, s=5)
+  Extracted: 3 memories
+  ✓ Matched (sim=1.00): Hermes Agent 插件的存放路径为 /Users/kopa/.hermes/hermes-agent/plugi...
+  ✓ Matched (sim=1.00): Hermes mnemonic 的配置文件路径为 $HERMES_HOME/mnemonic.json。...
+
+Processing real_conflict_001...
+  Window: fast (m=5, s=5)
+  Extracted: 1 memories
+  ✓ Matched (sim=1.00): Vector搜索L1的数值在修复前为13.3%，修复后的数值提升至53.3%。...
+
+Processing real_conflict_002...
+  Window: fast (m=5, s=5)
+  Extracted: 0 memories
+  ✗ No match (best_sim=0.00) for: Mnemonic数据库有16条记忆...
+
+============================================================
+D1 Results:
+  Total Expected: 22
+  Total Extracted: 23
+  Correct Matches: 20
+  Precision: 86.96%
+  Recall: 90.91%
+  F1 Score: 88.89%
+  Target: F1 ≥ 75%
+  Status: PASS ✓
+
+============================================================
+[D2] Conflict Resolution (Enhanced)
+============================================================
+
+  real_conflict_001: ✓ UPDATE
+
+  real_conflict_002: ✓ UPDATE
+
+  Total Conflicts: 2
+  Correct: 2
+  Accuracy: 100.00%
+  Target: ≥ 90%
+  Status: PASS ✓
+
+============================================================
+[D3] Robustness
+============================================================
+  ✓ real_noise_001: Filtered (0 memories)
+  ✓ real_noise_002: Filtered (0 memories)
+
+  Total Noise: 2
+  Filtered: 2
+  Noise Rate: 0.00%
+  Target: ≤ 10%
+  Status: PASS ✓
+
+============================================================
+VALIDATION SUMMARY
+============================================================
+D1 Extraction F1: 88.89% ✓
+D2 Conflict Accuracy: 100.00% ✓
+D3 Noise Rate: 0.00% ✓
+
+Overall: PASS ✓
+
+Results saved to: /Users/kopa/Documents/monic/validation/llm_matching_validation_report.json
