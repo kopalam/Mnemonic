@@ -336,6 +336,48 @@ class ExtractionService:
         self.temperature = config["llm"]["temperature"]
         self.max_tokens = config["llm"]["max_tokens"]
     
+    async def extract_adaptive(
+        self,
+        conversation: list[dict],
+    ) -> tuple[list[dict], dict]:
+        """
+        Extract memories with adaptive window size.
+        
+        Args:
+            conversation: List of conversation messages
+        
+        Returns:
+            Tuple of (memories, window_stats)
+        """
+        from mnemonic.adaptive_window import (
+            determine_extraction_window,
+            get_window_stats,
+        )
+        
+        # Determine window size
+        window = determine_extraction_window(conversation)
+        stats = get_window_stats(window)
+        
+        # Get last m messages
+        recent_conversation = conversation[-window.m:] if len(conversation) > window.m else conversation
+        
+        # Format conversation
+        conversation_text = self._format_conversation(recent_conversation)
+        
+        # Extract memories
+        memories = await self.extract(conversation_text)
+        
+        return memories, stats
+    
+    def _format_conversation(self, messages: list[dict]) -> str:
+        """Format conversation messages for extraction."""
+        lines = []
+        for msg in messages:
+            role = msg.get("role", "user")
+            content = msg.get("content", "")
+            lines.append(f"{role}: {content}")
+        return "\n".join(lines)
+    
     async def extract(self, conversation: str) -> list[dict]:
         """Extract memories from conversation using mem0-style prompt."""
         try:
