@@ -1,26 +1,13 @@
-"""Mnemonic memory plugin for Hermes Agent.
+"""Mnemonic memory plugin — MemoryProvider interface.
 
 Self-hosted memory system with BM25 keyword search and vector search.
+API endpoint: http://localhost:8010
 
-Installation:
-    pip install mnemonic
+Config via environment variables:
+  MNEMONIC_API_URL    — Mnemonic API endpoint (default: http://localhost:8010)
+  MNEMONIC_NAMESPACE  — Namespace for memory isolation (default: hermes:boss:hnoe:*)
 
-Hermes will auto-discover this plugin via entry_points.
-Configure via:
-    1. Environment variables:
-       MNEMONIC_API_URL=http://localhost:8010
-       MNEMONIC_NAMESPACE=hermes:boss:hnoe:*
-
-    2. Or $HERMES_HOME/mnemonic.json:
-       {
-         "api_url": "http://localhost:8010",
-         "namespace": "hermes:boss:hnoe:*"
-       }
-
-    3. Or config.yaml:
-       memory:
-         provider: mnemonic
-         memory_enabled: true
+Or via $HERMES_HOME/mnemonic.json.
 """
 
 from __future__ import annotations
@@ -28,228 +15,327 @@ from __future__ import annotations
 import json
 import logging
 import os
+import threading
+import time
 from typing import Any, Dict, List, Optional
 
 import httpx
 
+from agent.memory_provider import MemoryProvider
+from tools.registry import tool_error
+
 logger = logging.getLogger(__name__)
 
+# Circuit breaker: after this many consecutive failures, pause API calls
+# for _BREAKER_COOLDOWN_SECS to avoid hammering a down server.
+_BREAKER_THRESHOLD = 5
+_BREAKER_COOLDOWN_SECS = 120
 
-class MemoryProvider:
-    """Mnemonic memory provider for Hermes Agent.
 
-    Implements the MemoryProvider interface expected by Hermes.
-    """
+# ---------------------------------------------------------------------------
+# Config
+# ---------------------------------------------------------------------------
+
+def _load_config() -> dict:
+    """Load config from env vars, with $HERMES_HOME/mnemonic.json overrides."""
+    from hermes_constants import get_hermes_home
+
+    config = {
+        "api_url": os.environ.get("MNEMONIC_API_URL", "http://localhost:8010"),
+        "namespace": os.environ.get("MNEMONIC_NAMESPACE", "hermes:boss:hnoe:*"),
+    }
+
+    config_path = get_hermes_home() / "mnemonic.json"
+    if config_path.exists():
+        try:
+            file_cfg = json.loads(config_path.read_text(encoding="utf-8"))
+            config.update({k: v for k, v in file_cfg.items()
+                           if v is not None and v != ""})
+        except Exception:
+            pass
+
+    return config
+
+
+# ---------------------------------------------------------------------------
+# Tool schemas
+# ---------------------------------------------------------------------------
+
+SEARCH_SCHEMA = {
+    "name": "mnemonic_search",
+    "description": (
+        "Search memories by keyword or semantic meaning. "
+        "Returns relevant facts ranked by relevance. "
+        "Use mode='keyword' for exact term matching, mode='vector' for semantic search."
+    ),
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "query": {"type": "string", "description": "What to search for."},
+            "mode": {
+                "type": "string",
+                "description": "Search mode: 'keyword' (default) or 'vector'",
+                "enum": ["keyword", "vector"],
+            },
+            "limit": {
+                "type": "integer",
+                "description": "Max results (default: 5, max: 20).",
+            },
+        },
+        "required": ["query"],
+    },
+}
+
+EXTRACT_SCHEMA = {
+    "name": "mnemonic_extract",
+    "description": (
+        "Extract and store facts from text. "
+        "Automatically deduplicates and merges with existing memories."
+    ),
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "text": {"type": "string", "description": "Text to extract facts from."},
+        },
+        "required": ["text"],
+    },
+}
+
+
+# ---------------------------------------------------------------------------
+# MemoryProvider implementation
+# ---------------------------------------------------------------------------
+
+class MnemonicMemoryProvider(MemoryProvider):
+    """Mnemonic memory with BM25 keyword search and vector search."""
 
     def __init__(self):
-        """Initialize provider with config from env vars or mnemonic.json."""
+        self._config = None
+        self._api_url = "http://localhost:8010"
+        self._namespace = "hermes:boss:hnoe:*"
+        self._session_id = "default"  # Default session_id
+        self._prefetch_result = ""
+        self._prefetch_lock = threading.Lock()
+        # Circuit breaker state
+        self._consecutive_failures = 0
+        self._breaker_open_until = 0.0
+
+    @property
+    def name(self) -> str:
+        return "mnemonic"
+
+    def is_available(self) -> bool:
+        """Check if Mnemonic API is reachable."""
+        cfg = _load_config()
+        if not cfg.get("api_url"):
+            return False
+        
+        # Quick health check
+        try:
+            r = httpx.get(f"{cfg['api_url']}/health", timeout=2.0)
+            return r.status_code == 200
+        except Exception:
+            return False
+
+    def save_config(self, values, hermes_home):
+        """Write config to $HERMES_HOME/mnemonic.json."""
+        import json
         from pathlib import Path
-
-        # Load config
-        self.api_url = os.environ.get("MNEMONIC_API_URL", "http://localhost:8010")
-        self.namespace = os.environ.get("MNEMONIC_NAMESPACE", "hermes:boss:hnoe:*")
-
-        # Try mnemonic.json override
-        hermes_home = os.environ.get("HERMES_HOME", Path.home() / ".hermes")
         config_path = Path(hermes_home) / "mnemonic.json"
-        if config_path.exists():
-            try:
-                with open(config_path) as f:
-                    cfg = json.load(f)
-                    self.api_url = cfg.get("api_url", self.api_url)
-                    self.namespace = cfg.get("namespace", self.namespace)
-            except Exception as e:
-                logger.warning(f"Failed to load mnemonic.json: {e}")
+        config_path.write_text(json.dumps(values, indent=2), encoding="utf-8")
 
-        self._client = httpx.Client(timeout=30.0)
-        self._async_client = httpx.AsyncClient(timeout=30.0)
+    def initialize(self, session_id: str, **kwargs) -> None:
+        """Initialize for a session."""
+        self._config = _load_config()
+        self._api_url = self._config.get("api_url", "http://localhost:8010")
+        self._namespace = self._config.get("namespace", "hermes:boss:hnoe:*")
+        self._session_id = session_id  # Store session_id for write operations
+        logger.info(f"Mnemonic initialized: api_url={self._api_url}, namespace={self._namespace}, session_id={session_id}")
 
-        # Circuit breaker
-        self._failures = 0
-        self._breaker_threshold = 5
-        self._breaker_cooldown = 120
-        self._breaker_until = 0
+    def system_prompt_block(self) -> str:
+        """Return text to include in the system prompt."""
+        return "Mnemonic memory system is active. Use mnemonic_search to recall relevant context."
 
-        logger.info(f"Mnemonic initialized: api_url={self.api_url}, namespace={self.namespace}")
-
-    def _check_breaker(self) -> bool:
-        """Check if circuit breaker is open."""
-        if self._failures >= self._breaker_threshold:
-            if time.time() < self._breaker_until:
-                return True  # Breaker open
-            # Reset after cooldown
-            self._failures = 0
-        return False
-
-    def _record_failure(self):
-        """Record failure for circuit breaker."""
-        self._failures += 1
-        if self._failures >= self._breaker_threshold:
-            self._breaker_until = time.time() + self._breaker_cooldown
-            logger.warning(f"Circuit breaker opened for {self._breaker_cooldown}s")
-
-    def _reset_breaker(self):
-        """Reset circuit breaker on success."""
-        self._failures = 0
-
-    # --- MemoryProvider Interface ---
-
-    def add(self, content: str, user_id: str = None, metadata: dict = None) -> dict:
-        """Add a memory."""
-        if self._check_breaker():
-            return {"error": "Circuit breaker open"}
+    def prefetch(self, query: str, *, session_id: str = "") -> str:
+        """Recall relevant context for the upcoming turn."""
+        if self._is_breaker_open():
+            logger.warning("Mnemonic circuit breaker open, skipping prefetch")
+            return ""
 
         try:
-            payload = {
-                "content": content,
-                "namespace": self.namespace,
-                "user_id": user_id,
-                "metadata": metadata or {},
-            }
-            resp = self._client.post(f"{self.api_url}/memories", json=payload)
-            resp.raise_for_status()
-            self._reset_breaker()
-            return resp.json()
-        except Exception as e:
-            self._record_failure()
-            logger.error(f"Failed to add memory: {e}")
-            return {"error": str(e)}
-
-    def search(self, query: str, limit: int = 5, mode: str = "keyword") -> List[dict]:
-        """Search memories."""
-        if self._check_breaker():
-            return []
-
-        try:
-            params = {
-                "query": query,
-                "namespace": self.namespace,
-                "limit": limit,
-                "mode": mode,
-            }
-            resp = self._client.get(f"{self.api_url}/memories/search", params=params)
-            resp.raise_for_status()
-            self._reset_breaker()
-            return resp.json().get("results", [])
-        except Exception as e:
-            self._record_failure()
-            logger.error(f"Failed to search memories: {e}")
-            return []
-
-    def get(self, memory_id: str) -> Optional[dict]:
-        """Get a specific memory."""
-        if self._check_breaker():
-            return None
-
-        try:
-            resp = self._client.get(f"{self.api_url}/memories/{memory_id}")
-            resp.raise_for_status()
-            self._reset_breaker()
-            return resp.json()
-        except Exception as e:
-            self._record_failure()
-            logger.error(f"Failed to get memory: {e}")
-            return None
-
-    def update(self, memory_id: str, content: str = None, metadata: dict = None) -> dict:
-        """Update a memory."""
-        if self._check_breaker():
-            return {"error": "Circuit breaker open"}
-
-        try:
-            payload = {"namespace": self.namespace}
-            if content:
-                payload["content"] = content
-            if metadata:
-                payload["metadata"] = metadata
-
-            resp = self._client.patch(f"{self.api_url}/memories/{memory_id}", json=payload)
-            resp.raise_for_status()
-            self._reset_breaker()
-            return resp.json()
-        except Exception as e:
-            self._record_failure()
-            logger.error(f"Failed to update memory: {e}")
-            return {"error": str(e)}
-
-    def delete(self, memory_id: str) -> bool:
-        """Delete a memory."""
-        if self._check_breaker():
-            return False
-
-        try:
-            resp = self._client.delete(
-                f"{self.api_url}/memories/{memory_id}",
-                params={"namespace": self.namespace}
+            r = httpx.post(
+                f"{self._api_url}/memories/search",
+                headers={"X-Namespace": self._namespace},
+                json={"query": query, "mode": "keyword", "limit": 3},
+                timeout=5.0,
             )
-            resp.raise_for_status()
-            self._reset_breaker()
-            return True
+
+            if r.status_code == 200:
+                data = r.json()
+                if data:
+                    self._reset_breaker()
+                    context = "相关历史记忆：\n"
+                    for item in data:
+                        # API returns list of {memory: {content: ...}}
+                        content = item.get("memory", {}).get("content", "")
+                        context += f"- {content}\n"
+                    return context
+            else:
+                self._record_failure()
+                logger.warning(f"Mnemonic search failed: {r.status_code}")
         except Exception as e:
             self._record_failure()
-            logger.error(f"Failed to delete memory: {e}")
-            return False
+            logger.error(f"Mnemonic search error: {e}")
 
-    def list_all(self, limit: int = 100) -> List[dict]:
-        """List all memories."""
-        if self._check_breaker():
-            return []
+        return ""
+
+    def sync_turn(self, user_message: str, assistant_message: str, session_id: str = None) -> None:
+        """Sync turn to memory (async write).
+        
+        Args:
+            user_message: User's message content
+            assistant_message: Assistant's response (not used in extraction)
+            session_id: Optional session ID override
+        """
+        # Only extract from user message, not assistant response
+        if not user_message or self._is_breaker_open():
+            return
 
         try:
-            params = {"namespace": self.namespace, "limit": limit}
-            resp = self._client.get(f"{self.api_url}/memories", params=params)
-            resp.raise_for_status()
-            self._reset_breaker()
-            return resp.json().get("memories", [])
+            # Use session_id from parameter or instance
+            effective_session = session_id or self._session_id or "default"
+            # Replace wildcard with session_id for write operations
+            write_ns = self._namespace.replace("*", effective_session)
+            r = httpx.post(
+                f"{self._api_url}/memories/extract",
+                headers={"X-Namespace": write_ns},
+                json={"conversation": user_message},
+                timeout=10.0,
+            )
+
+            if r.status_code in (200, 201):
+                self._reset_breaker()
+                logger.debug("Mnemonic extract success")
+            else:
+                self._record_failure()
+                logger.warning(f"Mnemonic extract failed: {r.status_code}")
         except Exception as e:
             self._record_failure()
-            logger.error(f"Failed to list memories: {e}")
-            return []
+            logger.error(f"Mnemonic extract error: {e}")
 
-    # --- Async variants for Hermes async operations ---
+    def get_tool_schemas(self) -> List[Dict]:
+        """Return tool schemas to expose to the model."""
+        return [SEARCH_SCHEMA, EXTRACT_SCHEMA]
 
-    async def async_add(self, content: str, user_id: str = None, metadata: dict = None) -> dict:
-        """Async add memory."""
-        if self._check_breaker():
-            return {"error": "Circuit breaker open"}
+    def handle_tool_call(self, name: str, arguments: Dict) -> str:
+        """Handle a tool call from the model."""
+        if name == "mnemonic_search":
+            return self._handle_search(arguments)
+        elif name == "mnemonic_extract":
+            return self._handle_extract(arguments)
+        else:
+            return tool_error(f"Unknown tool: {name}")
+
+    def _handle_search(self, args: Dict) -> str:
+        """Handle mnemonic_search tool call."""
+        query = args.get("query", "")
+        mode = args.get("mode", "keyword")
+        limit = min(args.get("limit", 5), 20)
+
+        if not query:
+            return tool_error("Query is required")
+
+        if self._is_breaker_open():
+            return "Mnemonic is temporarily unavailable (circuit breaker open)."
 
         try:
-            payload = {
-                "content": content,
-                "namespace": self.namespace,
-                "user_id": user_id,
-                "metadata": metadata or {},
-            }
-            resp = await self._async_client.post(f"{self.api_url}/memories", json=payload)
-            resp.raise_for_status()
-            self._reset_breaker()
-            return resp.json()
+            r = httpx.post(
+                f"{self._api_url}/memories/search",
+                headers={"X-Namespace": self._namespace},
+                json={"query": query, "mode": mode, "limit": limit},
+                timeout=10.0,
+            )
+
+            if r.status_code == 200:
+                self._reset_breaker()
+                data = r.json()
+                if not data:
+                    return "No relevant memories found."
+                
+                result = f"Found {len(data)} relevant memories:\n\n"
+                for i, item in enumerate(data, 1):
+                    content = item.get("memory", {}).get("content", "")
+                    result += f"{i}. {content}\n\n"
+                return result
+            else:
+                self._record_failure()
+                return tool_error(f"Search failed: {r.status_code}")
         except Exception as e:
             self._record_failure()
-            logger.error(f"Failed to async add memory: {e}")
-            return {"error": str(e)}
+            return tool_error(f"Search error: {e}")
 
-    async def async_search(self, query: str, limit: int = 5, mode: str = "keyword") -> List[dict]:
-        """Async search memories."""
-        if self._check_breaker():
-            return []
+    def _handle_extract(self, args: Dict) -> str:
+        """Handle mnemonic_extract tool call."""
+        text = args.get("text", "")
+
+        if not text:
+            return tool_error("Text is required")
+
+        if self._is_breaker_open():
+            return "Mnemonic is temporarily unavailable (circuit breaker open)."
 
         try:
-            params = {
-                "query": query,
-                "namespace": self.namespace,
-                "limit": limit,
-                "mode": mode,
-            }
-            resp = await self._async_client.get(f"{self.api_url}/memories/search", params=params)
-            resp.raise_for_status()
-            self._reset_breaker()
-            return resp.json().get("results", [])
+            # Replace wildcard with session_id for write operations
+            write_ns = self._namespace.replace("*", self._session_id or "default")
+            r = httpx.post(
+                f"{self._api_url}/memories/extract",
+                headers={"X-Namespace": write_ns},
+                json={"conversation": text},  # API expects "conversation" field
+                timeout=15.0,
+            )
+
+            if r.status_code in (200, 201):
+                self._reset_breaker()
+                data = r.json()
+                if isinstance(data, list):
+                    return f"Extracted {len(data)} memories."
+                action = data.get("action", "NONE")
+                if action == "ADD":
+                    return "New memory added."
+                elif action == "UPDATE":
+                    return "Memory updated."
+                elif action == "DELETE":
+                    return "Memory deleted."
+                else:
+                    return "No changes (duplicate or irrelevant)."
+            else:
+                self._record_failure()
+                return tool_error(f"Extract failed: {r.status_code}")
         except Exception as e:
             self._record_failure()
-            logger.error(f"Failed to async search memories: {e}")
-            return []
+            return tool_error(f"Extract error: {e}")
 
+    def shutdown(self) -> None:
+        """Clean shutdown."""
+        logger.info("Mnemonic shutdown")
 
-# Import time for circuit breaker
-import time
+    # -- Circuit breaker ------------------------------------------------------
+
+    def _is_breaker_open(self) -> bool:
+        """Check if circuit breaker is open."""
+        return time.time() < self._breaker_open_until
+
+    def _record_failure(self) -> None:
+        """Record a failure and potentially open the breaker."""
+        self._consecutive_failures += 1
+        if self._consecutive_failures >= _BREAKER_THRESHOLD:
+            self._breaker_open_until = time.time() + _BREAKER_COOLDOWN_SECS
+            logger.error(
+                f"Mnemonic circuit breaker opened for {_BREAKER_COOLDOWN_SECS}s "
+                f"after {self._consecutive_failures} consecutive failures"
+            )
+
+    def _reset_breaker(self) -> None:
+        """Reset circuit breaker on success."""
+        self._consecutive_failures = 0
+        self._breaker_open_until = 0.0
