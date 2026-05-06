@@ -13,6 +13,12 @@ echo ""
 PLUGIN_DIR="$HOME/.hermes/plugins/mnemonic"
 GITHUB_RAW="https://raw.githubusercontent.com/kopalam/Mnemonic/main/plugins/mnemonic"
 
+# 生成随机namespace的函数
+generate_random_namespace() {
+    local random_suffix=$(cat /dev/urandom | tr -dc 'a-z0-9' | fold -w 8 | head -n 1)
+    echo "hermes:user:${random_suffix}"
+}
+
 # 1. 安装Python包
 echo "[1/7] 安装 hermes-mnemonic Python包..."
 PIP_INSTALLED=false
@@ -69,9 +75,11 @@ if [ ! -f "$MNEMONIC_CONFIG" ]; then
     read -r API_URL
     API_URL=${API_URL:-http://localhost:8010}
     
-    echo "请输入Namespace（默认: hermes:boss:hnoe:*）："
-    read -r NAMESPACE
-    NAMESPACE=${NAMESPACE:-hermes:boss:hnoe:*}
+    # 自动生成随机namespace
+    NAMESPACE=$(generate_random_namespace)
+    echo ""
+    echo "已自动生成Namespace: $NAMESPACE"
+    echo "（用于隔离不同用户的记忆数据）"
     
     cat > "$MNEMONIC_CONFIG" <<EOF
 {
@@ -79,11 +87,14 @@ if [ ! -f "$MNEMONIC_CONFIG" ]; then
   "namespace": "$NAMESPACE"
 }
 EOF
+    echo ""
     echo "  ✓ 已创建 $MNEMONIC_CONFIG"
 else
     echo "  ✓ 配置文件已存在: $MNEMONIC_CONFIG"
     # 读取现有配置的API地址
     API_URL=$(grep -o '"api_url"[[:space:]]*:[[:space:]]*"[^"]*"' "$MNEMONIC_CONFIG" | cut -d'"' -f4)
+    NAMESPACE=$(grep -o '"namespace"[[:space:]]*:[[:space:]]*"[^"]*"' "$MNEMONIC_CONFIG" | cut -d'"' -f4)
+    echo "  当前Namespace: $NAMESPACE"
 fi
 
 # 5. 配置Hermes
@@ -147,6 +158,7 @@ echo "════════════════════════�
 echo ""
 echo "插件目录: $PLUGIN_DIR"
 echo "配置文件: $MNEMONIC_CONFIG"
+echo "Namespace: $NAMESPACE"
 echo "Python包: $([ "$PIP_INSTALLED" = true ] && echo "已安装" || echo "未安装")"
 echo ""
 echo "下一步："
