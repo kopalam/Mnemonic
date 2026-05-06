@@ -3,9 +3,9 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "mnemonic"
+name = "hermes-mnemonic"
 version = "0.2.0"
-description = "Multi-tenant AI Agent persistent memory storage middleware"
+description = "Multi-tenant AI Agent persistent memory storage middleware for Hermes"
 authors = [{name = "HNOE"}]
 requires-python = ">=3.11"
 dependencies = [

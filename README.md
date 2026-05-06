@@ -1,14 +1,16 @@
-# Mnemonic - AI Agent持久化记忆系统
+# Hermes Mnemonic - AI Agent持久化记忆系统
 
-基于mem0架构的多端共享记忆存储中间件。
+基于mem0架构的多端共享记忆存储中间件，专为Hermes Agent设计。
 
 ## 安装
 
 ### 方式一：PyPI安装（推荐）
 
 ```bash
-pip install mnemonic
+pip install hermes-mnemonic
 ```
+
+Hermes Agent会自动发现Mnemonic插件，无需手动复制文件。
 
 Hermes Agent会自动发现Mnemonic插件，无需手动复制文件。
 
