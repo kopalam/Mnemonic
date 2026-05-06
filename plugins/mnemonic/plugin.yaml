@@ -1,0 +1,6 @@
+name: mnemonic
+description: Self-hosted memory system with BM25 keyword search and vector search
+version: 1.0.0
+author: HNOE
+requires:
+  - httpx
