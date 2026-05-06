@@ -15,14 +15,30 @@ GITHUB_RAW="https://raw.githubusercontent.com/kopalam/Mnemonic/main/plugins/mnem
 
 # 1. 安装Python包
 echo "[1/7] 安装 hermes-mnemonic Python包..."
+PIP_INSTALLED=false
+
 if command -v pip &> /dev/null; then
-    pip install hermes-mnemonic -q
-    echo "  ✓ 已安装 hermes-mnemonic"
+    if pip install hermes-mnemonic 2>&1 | tee /tmp/pip_install.log && grep -q "Successfully installed hermes-mnemonic" /tmp/pip_install.log || pip show hermes-mnemonic > /dev/null 2>&1; then
+        echo "  ✓ 已安装 hermes-mnemonic"
+        PIP_INSTALLED=true
+    else
+        echo "  ✗ pip安装失败"
+    fi
 elif command -v pip3 &> /dev/null; then
-    pip3 install hermes-mnemonic -q
-    echo "  ✓ 已安装 hermes-mnemonic"
+    if pip3 install hermes-mnemonic 2>&1 | tee /tmp/pip_install.log && grep -q "Successfully installed hermes-mnemonic" /tmp/pip_install.log || pip3 show hermes-mnemonic > /dev/null 2>&1; then
+        echo "  ✓ 已安装 hermes-mnemonic"
+        PIP_INSTALLED=true
+    else
+        echo "  ✗ pip3安装失败"
+    fi
 else
-    echo "  ✗ pip/pip3 未找到，跳过Python包安装"
+    echo "  ✗ pip/pip3 未找到"
+fi
+
+if [ "$PIP_INSTALLED" = false ]; then
+    echo ""
+    echo "  警告: Python包安装失败，但将继续安装插件文件"
+    echo ""
 fi
 
 # 2. 创建目录
@@ -73,13 +89,19 @@ fi
 # 5. 配置Hermes
 echo "[5/7] 配置Hermes..."
 if command -v hermes &> /dev/null; then
-    hermes config set memory.provider mnemonic 2>/dev/null || true
-    hermes config set memory.memory_enabled true 2>/dev/null || true
-    hermes plugins enable mnemonic 2>/dev/null || true
-    echo "  ✓ 已配置 memory.provider=mnemonic"
-    echo "  ✓ 已启用 mnemonic 插件"
+    # 设置memory provider
+    hermes config set memory.provider mnemonic
+    echo "  ✓ 已设置 memory.provider=mnemonic"
+    
+    # 启用memory
+    hermes config set memory.memory_enabled true
+    echo "  ✓ 已设置 memory.memory_enabled=true"
+    
+    # 启用插件
+    hermes plugins enable mnemonic
+    echo "  ✓ 已执行 hermes plugins enable mnemonic"
 else
-    echo "  ! hermes命令未找到，请手动配置config.yaml"
+    echo "  ✗ hermes命令未找到，请手动配置config.yaml"
 fi
 
 # 6. 检查服务端连通性
@@ -108,7 +130,11 @@ fi
 echo "[7/7] 验证安装..."
 if command -v hermes &> /dev/null; then
     echo ""
+    echo "Memory status:"
     hermes memory status
+    echo ""
+    echo "Plugins list:"
+    hermes plugins list | grep -A1 mnemonic || echo "  mnemonic插件状态未知"
     echo ""
 else
     echo "  请手动运行: hermes memory status"
@@ -121,6 +147,7 @@ echo "════════════════════════�
 echo ""
 echo "插件目录: $PLUGIN_DIR"
 echo "配置文件: $MNEMONIC_CONFIG"
+echo "Python包: $([ "$PIP_INSTALLED" = true ] && echo "已安装" || echo "未安装")"
 echo ""
 echo "下一步："
 echo "  1. 确保Mnemonic API服务已启动并可达"
