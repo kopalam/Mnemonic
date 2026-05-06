@@ -234,9 +234,27 @@ class MemoryStore:
         # Filter by min_similarity
         filtered = [(row[0], row[1]) for row in rows if row[1] >= min_similarity]
         
-        # Log access for returned memories
-        for memory, _ in filtered:
+        # Update access count and calculate dynamic importance
+        from mnemonic.temporal_decay import calculate_temporal_importance
+        from datetime import datetime, timezone
+        
+        for memory, similarity in filtered:
+            # Increment access count
+            memory.access_count += 1
+            memory.last_accessed_at = datetime.now(timezone.utc)
+            
+            # Calculate dynamic importance
+            dynamic_importance = calculate_temporal_importance(
+                initial_importance=memory.initial_importance,
+                memory_type=memory.memory_type,
+                created_at=memory.created_at,
+                access_count=memory.access_count,
+            )
+            memory.importance = dynamic_importance
+            
             await self._log_access(memory.id, "read")
+        
+        await self.session.flush()
         
         return filtered
     
@@ -312,8 +330,27 @@ class MemoryStore:
             if mid in mem_map:
                 memories.append((mem_map[mid], score_map[mid]))
         
-        for mem, _ in memories:
+        # Update access count and calculate dynamic importance
+        from mnemonic.temporal_decay import calculate_temporal_importance
+        from datetime import datetime, timezone
+        
+        for mem, score in memories:
+            # Increment access count
+            mem.access_count += 1
+            mem.last_accessed_at = datetime.now(timezone.utc)
+            
+            # Calculate dynamic importance
+            dynamic_importance = calculate_temporal_importance(
+                initial_importance=mem.initial_importance,
+                memory_type=mem.memory_type,
+                created_at=mem.created_at,
+                access_count=mem.access_count,
+            )
+            mem.importance = dynamic_importance
+            
             await self._log_access(mem.id, "read")
+        
+        await self.session.flush()
         
         return memories
     

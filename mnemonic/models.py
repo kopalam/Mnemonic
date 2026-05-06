@@ -11,6 +11,7 @@ from sqlalchemy import (
     Float,
     ForeignKey,
     Index,
+    Integer,
     String,
     Text,
     func,
@@ -45,6 +46,11 @@ class Memory(Base):
     # 元数据
     memory_type: Mapped[str] = mapped_column(String(50), default="fact")
     importance: Mapped[float] = mapped_column(Float, default=0.5)
+    
+    # 时间衰减重要性字段
+    initial_importance: Mapped[float] = mapped_column(Float, default=0.5)  # 初始重要性
+    access_count: Mapped[int] = mapped_column(Integer, default=0)  # 访问次数
+    last_accessed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))  # 最后访问时间
     
     # 向量嵌入 (1024 for BGE-M3)
     embedding: Mapped[Optional[list[float]]] = mapped_column(Vector(1024))
