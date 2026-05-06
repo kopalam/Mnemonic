@@ -1,6 +1,10 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
 [project]
 name = "mnemonic"
-version = "0.1.0"
+version = "0.2.0"
 description = "Multi-tenant AI Agent persistent memory storage middleware"
 authors = [{name = "HNOE"}]
 requires-python = ">=3.11"
@@ -17,12 +21,31 @@ dependencies = [
     "jieba>=0.42",
 ]
 
-[tool.uv]
-dev-dependencies = [
+[project.optional-dependencies]
+dev = [
     "pytest>=8.0",
     "pytest-asyncio>=0.23",
     "httpx>=0.27",
     "ruff>=0.4",
+]
+
+# Hermes插件入口点 - 自动注册
+[project.entry-points."hermes.memory_providers"]
+mnemonic = "mnemonic_plugin:MemoryProvider"
+
+[project.scripts]
+mnemonic-api = "mnemonic.api:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["mnemonic"]
+
+[tool.hatch.build.targets.sdist]
+exclude = [
+    "/.env",
+    "/.env.example",
+    "/tests",
+    "/docker-compose.yml",
+    "/Dockerfile",
 ]
 
 [tool.ruff]

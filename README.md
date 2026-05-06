@@ -1,79 +1,40 @@
-# Mnemonic Memory Plugin
+# Mnemonic - AI Agent持久化记忆系统
 
-AI Agent 持久化记忆系统 - 基于 pgvector 的向量搜索 + 四级命名空间隔离
+基于mem0架构的多端共享记忆存储中间件。
 
-## 一键安装
+## 安装
+
+### 方式一：PyPI安装（推荐）
 
 ```bash
-# 方式1: curl 安装脚本
-curl -sSL https://raw.githubusercontent.com/kopalam/Mnemonic/main/install.sh | bash
-
-# 方式2: 指定安装目录
-INSTALL_DIR=~/mnemonic curl -sSL https://raw.githubusercontent.com/kopalam/Mnemonic/main/install.sh | bash
+pip install mnemonic
 ```
 
-## 手动安装
+Hermes Agent会自动发现Mnemonic插件，无需手动复制文件。
 
-### 1. 前置要求
-
-- PostgreSQL 14+ with pgvector extension
-- Docker & docker-compose（可选，用于运行 API）
-- SiliconFlow API Key（用于 embedding）
-
-### 2. 克隆仓库
+### 方式二：从源码安装
 
 ```bash
 git clone https://github.com/kopalam/Mnemonic.git
 cd Mnemonic
+pip install -e .
 ```
 
-### 3. 配置环境变量
+## 配置
+
+### 1. 环境变量（推荐）
 
 ```bash
-cp .env.example .env
-# 编辑 .env，填入数据库连接信息
+# Mnemonic API地址
+export MNEMONIC_API_URL=http://localhost:8010
+
+# 命名空间（用于多租户隔离）
+export MNEMONIC_NAMESPACE=hermes:boss:hnoe:*
 ```
 
-`.env` 配置项：
+### 2. 配置文件
 
-```bash
-# Database
-DB_HOST=your-postgres-host
-DB_PORT=5432
-DB_NAME=mnemonic
-DB_USER=postgres
-DB_PASSWORD=your-password
-
-# API
-API_PORT=8010
-
-# Embedding (SiliconFlow)
-EMBEDDING_PROVIDER=siliconflow
-EMBEDDING_MODEL=Qwen/Qwen3-Embedding-0.6B
-SILICONFLOW_API_KEY=your-api-key
-```
-
-### 4. 启动服务
-
-```bash
-docker-compose up -d
-```
-
-API 会自动：
-- 创建 `vector` 和 `uuid-ossp` 扩展
-- 创建 `memories`, `entities`, `memory_access_logs` 表
-- 创建索引和触发器
-
-### 5. 配置 Hermes
-
-编辑 `~/.hermes/profiles/oper/config.yaml`:
-
-```yaml
-memory:
-  provider: mnemonic
-```
-
-创建 `~/.hermes/profiles/oper/plugins/memory/mnemonic/config.json`:
+创建 `~/.hermes/mnemonic.json`：
 
 ```json
 {
@@ -82,88 +43,84 @@ memory:
 }
 ```
 
-## 验证安装
+### 3. Hermes配置
+
+编辑 `~/.hermes/config.yaml`：
+
+```yaml
+memory:
+  provider: mnemonic
+  memory_enabled: true
+```
+
+## 部署Mnemonic API服务
+
+### Docker部署（推荐）
 
 ```bash
-# 健康检查
-curl http://localhost:8010/health
-# {"status": "ok", "version": "0.2.0", "database": "connected"}
+# 克隆仓库
+git clone https://github.com/kopalam/Mnemonic.git
+cd Mnemonic
 
-# 创建记忆
-curl -X POST http://localhost:8010/memories \
-  -H "Content-Type: application/json" \
-  -H "X-Namespace: hermes:boss:hnoe:session1" \
-  -d '{"content": "Hello Mnemonic!"}'
+# 配置环境变量
+cp .env.example .env
+# 编辑.env填入API keys
 
-# 搜索记忆
-curl -X POST http://localhost:8010/memories/search \
-  -H "Content-Type: application/json" \
-  -H "X-Namespace: hermes:boss:hnoe:*" \
-  -d '{"query": "Hello", "limit": 5}'
+# 启动服务
+docker-compose up -d
+
+# 检查状态
+docker-compose logs -f mnemonic-api
 ```
 
-## 特性
+### 手动部署
 
-- ✅ **向量搜索**: pgvector 支持语义相似度检索
-- ✅ **关键词搜索**: TSVector + jieba 中文分词
-- ✅ **命名空间隔离**: client:user:agent:session 四级隔离
-- ✅ **实体提取**: 自动提取并关联实体
-- ✅ **访问日志**: 支持 WRRF 权重计算
-- ✅ **自动初始化**: 启动时自动创建表结构
+```bash
+# 安装依赖
+pip install mnemonic
 
-## 架构
+# 启动API服务
+mnemonic-api
 
-```
-┌─────────────────┐
-│  Hermes Agent   │
-└────────┬────────┘
-         │ mnemonic plugin
-         ▼
-┌─────────────────┐
-│  Mnemonic API   │ :8010
-│  (FastAPI)      │
-└────────┬────────┘
-         │ SQLAlchemy
-         ▼
-┌─────────────────┐
-│  PostgreSQL     │
-│  + pgvector     │
-└─────────────────┘
+# 或直接运行
+python -m mnemonic.api
 ```
 
-## 数据库 Schema
+## 使用
 
-### memories 表
+安装后，Hermes Agent会自动使用Mnemonic作为记忆后端：
 
-| Column | Type | Description |
-|--------|------|-------------|
-| id | UUID | Primary key |
-| client_id | VARCHAR(255) | 客户端 ID |
-| user_id | VARCHAR(255) | 用户 ID |
-| agent_id | VARCHAR(255) | Agent ID |
-| session_id | VARCHAR(255) | 会话 ID |
-| content | TEXT | 记忆内容 |
-| content_hash | VARCHAR(32) | MD5 去重 |
-| embedding | vector(1024) | 向量嵌入 |
-| content_tokens | TSVECTOR | 中文分词 tokens |
-| memory_type | VARCHAR(50) | fact/event/preference |
-| importance | FLOAT | 重要性权重 |
-| created_at | TIMESTAMPTZ | 创建时间 |
-| deleted_at | TIMESTAMPTZ | 软删除 |
+```python
+# 在Hermes会话中
+# 记忆会自动保存和检索
+"记住我的名字是Boss"
+"我的名字是什么？"  # 会从Mnemonic检索
+```
+
+## 功能特性
+
+- ✅ **BM25关键词搜索** - 中文分词优化
+- ✅ **向量搜索** - 支持SiliconFlow/OpenAI/本地模型
+- ✅ **多租户隔离** - namespace隔离不同用户
+- ✅ **Circuit Breaker** - 自动熔断保护
+- ✅ **会话记忆** - 支持session_id关联
+- ✅ **实体提取** - 自动提取关键信息（开发中）
+
+## API文档
+
+启动服务后访问：http://localhost:8010/docs
 
 ## 开发
 
 ```bash
-# 本地开发
-python -m venv .venv
-source .venv/bin/activate
-pip install -e .
+# 安装开发依赖
+pip install -e ".[dev]"
 
 # 运行测试
 pytest
 
-# 启动开发服务器
-uvicorn mnemonic.api:app --reload --port 8010
+# 代码检查
+ruff check mnemonic/
 ```
 
 ## License
