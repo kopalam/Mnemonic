@@ -41,19 +41,30 @@ class MemoryStore:
     ) -> Memory:
         """Create a new memory with multi-layer deduplication.
         
-        Dedup layers:
+        Dedup layers (all operate at client+user+agent level, ignoring session_id
+        so the same fact is not duplicated across sessions):
         1. Exact hash match (MD5) - returns existing memory
         2. Semantic similarity (vector) - checks for duplicates/updates
         3. Conflict detection - merges or rejects based on conflict type
         """
         content_hash = hashlib.md5(data.content.encode('utf-8')).hexdigest()
         
-        # Layer 1: Exact hash dedup
+        # Build a session-agnostic namespace for dedup queries.
+        # Memories are user-level facts; the same fact should never be
+        # duplicated just because it was written from a different session.
+        dedup_namespace = Namespace(
+            client_id=namespace.client_id,
+            user_id=namespace.user_id,
+            agent_id=namespace.agent_id,
+            session_id=None,  # intentionally exclude session_id
+        )
+        
+        # Layer 1: Exact hash dedup (session-agnostic)
         dedup_stmt = select(Memory).where(
             and_(
                 Memory.content_hash == content_hash,
                 Memory.deleted_at.is_(None),
-                *self._namespace_filters(namespace),
+                *self._namespace_filters(dedup_namespace),
             )
         )
         existing = await self.session.execute(dedup_stmt)
@@ -61,7 +72,7 @@ class MemoryStore:
         if existing_mem:
             return existing_mem
         
-        # Layer 2: Semantic similarity dedup (if embedding provided)
+        # Layer 2: Semantic similarity dedup (session-agnostic)
         if enable_semantic_dedup and embedding:
             # Commit so previously created memories are visible to search.
             # Note: if the current memory was already flushed/added to this
@@ -70,7 +81,7 @@ class MemoryStore:
             await self.session.commit()
             
             similar_mem = await self.find_similar(
-                namespace, embedding, threshold=semantic_threshold
+                dedup_namespace, embedding, threshold=semantic_threshold
             )
             
             if similar_mem:
