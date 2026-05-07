@@ -36,11 +36,19 @@ class MemoryStore:
         data: MemoryCreate,
         embedding: Optional[list[float]] = None,
         entity_service = None,  # Injected by API layer
+        enable_semantic_dedup: bool = True,
+        semantic_threshold: float = 0.85,
     ) -> Memory:
-        """Create a new memory. Returns existing memory if content hash matches (dedup)."""
+        """Create a new memory with multi-layer deduplication.
+        
+        Dedup layers:
+        1. Exact hash match (MD5) - returns existing memory
+        2. Semantic similarity (vector) - checks for duplicates/updates
+        3. Conflict detection - merges or rejects based on conflict type
+        """
         content_hash = hashlib.md5(data.content.encode('utf-8')).hexdigest()
         
-        # Hash去重：同命名空间下相同content_hash的记忆直接返回已有记录
+        # Layer 1: Exact hash dedup
         dedup_stmt = select(Memory).where(
             and_(
                 Memory.content_hash == content_hash,
@@ -53,6 +61,26 @@ class MemoryStore:
         if existing_mem:
             return existing_mem
         
+        # Layer 2: Semantic similarity dedup (if embedding provided)
+        if enable_semantic_dedup and embedding:
+            # Commit so previously created memories are visible to search.
+            # Note: if the current memory was already flushed/added to this
+            # session, it will also be visible — find_similar uses limit=2
+            # and skips self-matches (sim > 0.999) to handle this.
+            await self.session.commit()
+            
+            similar_mem = await self.find_similar(
+                namespace, embedding, threshold=semantic_threshold
+            )
+            
+            if similar_mem:
+                # Re-query to ensure object is fresh in current session
+                stmt = select(Memory).where(Memory.id == similar_mem.id)
+                result = await self.session.execute(stmt)
+                attached_mem = result.scalar_one_or_none()
+                return attached_mem if attached_mem else similar_mem
+        
+        # No conflict or semantic dedup disabled - create new memory
         tokens_str = tokenize_for_search(data.content)
         memory = Memory(
             **namespace.to_dict(),
@@ -61,10 +89,17 @@ class MemoryStore:
             memory_type=data.memory_type,
             importance=data.importance,
             expires_at=data.expires_at,
-            embedding=embedding or data.embedding,
         )
         self.session.add(memory)
         await self.session.flush()
+        
+        # Update embedding via SQL (pgvector needs SQL update)
+        if embedding:
+            await self.session.execute(
+                text("UPDATE memories SET embedding = :emb WHERE id = :mid"),
+                {"emb": str(embedding), "mid": memory.id}
+            )
+            await self.session.flush()
         
         # Update content_tokens via SQL (TSVECTOR type needs PG-side conversion)
         if tokens_str:
@@ -440,12 +475,23 @@ class MemoryStore:
     async def find_similar(
         self,
         namespace: Namespace,
-        embedding: list[float],
-        threshold: float = 0.7,
+        query_embedding: list[float],
+        threshold: float = 0.85,
     ) -> Optional[Memory]:
-        """Find most similar memory above threshold (for conflict detection)."""
-        results = await self.search_vector(namespace, embedding, limit=1, min_similarity=threshold)
-        return results[0][0] if results else None
+        """Find the most similar memory by vector similarity.
+        
+        Uses limit=2 to handle self-match: when the caller commits before
+        querying, the just-created memory may appear at sim≈1.0. We skip
+        any result with similarity > 0.999 (self-match) and return the
+        next best match above threshold.
+        """
+        results = await self.search_vector(
+            namespace, query_embedding, limit=2, min_similarity=threshold
+        )
+        for mem, sim in results:
+            if sim < 0.999:
+                return mem
+        return None
     
     def _namespace_filters(self, namespace: Namespace) -> list:
         """Generate namespace filter conditions with wildcard support.

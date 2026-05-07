@@ -86,7 +86,10 @@ async def create_memory(
     # Generate embedding if not provided
     embedding = None
     if data.embedding is None:
-        embedding = await embedding_service.embed(data.content)
+        try:
+            embedding = await embedding_service.embed(data.content)
+        except Exception:
+            embedding = None
     
     # Create memory with entity extraction
     memory = await store.create(namespace, data, embedding, entity_service=entity_service)

@@ -61,7 +61,7 @@ def detect_conflict(
     # Check for semantic similarity (simple heuristic)
     similarity = _calculate_similarity(content_1, content_2)
 
-    if similarity > 0.85:
+    if similarity > 0.75:  # Lowered from 0.85 - Jaccard is strict
         return ConflictType.DUPLICATE
     elif similarity > 0.5:
         return ConflictType.COMPLEMENTARY
