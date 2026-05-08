@@ -72,6 +72,7 @@ class Memory(Base):
     __table_args__ = (
         Index("idx_memories_namespace", "client_id", "user_id", "agent_id", "session_id", postgresql_where=deleted_at.is_(None)),
         Index("idx_memories_created", created_at.desc(), postgresql_where=deleted_at.is_(None)),
+        Index("ix_memories_content_tokens_gin", "content_tokens", postgresql_using="gin"),
     )
     
     def __repr__(self) -> str:
